@@ -1,7 +1,10 @@
+import client from "@/app/utilis/db";
 import NextAuth from "next-auth";
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 const handler = NextAuth({
+  adapter: MongoDBAdapter(client),
   providers: [
     CredentialsProvider({
       name: "Credentials",
