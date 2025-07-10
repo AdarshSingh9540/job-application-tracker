@@ -15,7 +15,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
-// import logo from "../../public/logo/Frame 1437253029.jpg";
+import logo from "../../public/programmer.png";
 import Image from "next/image";
 const mainSidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
@@ -53,14 +53,22 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <div
         className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-primary-foreground transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
+          "fixed inset-y-0 left-0 z-50 w-64 bg-background transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        {/* Logo */}
-        <div className="flex items-center justify-center h-16 px-4">
-          <Link href="/" className="flex items-center space-x-2">
-            {/* <Image src={logo} alt="guildup" width={120} height={120} /> */}
+        <div className="flex items-center justify-center h-16  ">
+          <Link href="/" className="flex items-center ">
+            <Image
+              src={logo}
+              alt="GuildUp Logo"
+              width={40}
+              height={40}
+              className="rounded-md"
+            />
+            <span className="text-lg font-bold text-gray-900 mx-3">
+              Let&apos;s Connect
+            </span>
           </Link>
         </div>
 

@@ -21,7 +21,7 @@ interface NavbarProps {
 
 export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
   return (
-    <header className="bg-background shadow-sm border-b border-border">
+    <header className=" shadow-sm border-b border-border">
       <div className="flex items-center justify-between h-16 px-6">
         <div className="flex items-center">
           <Button
@@ -32,7 +32,6 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
           >
             <Menu className="w-5 h-5" />
           </Button>
-          <h1 className="text-xl font-semibold text-foreground">{title}</h1>
         </div>
 
         <div className="flex items-center space-x-4">
