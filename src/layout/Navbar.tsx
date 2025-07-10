@@ -1,5 +1,6 @@
 "use client";
 
+import { useSession, signIn, signOut } from "next-auth/react";
 import { Search, Bell, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -20,8 +21,10 @@ interface NavbarProps {
 }
 
 export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
+  const { data: session, status } = useSession();
+
   return (
-    <header className=" shadow-sm border-b border-border">
+    <header className="shadow-sm border-b border-border">
       <div className="flex items-center justify-between h-16 px-6">
         <div className="flex items-center">
           <Button
@@ -40,7 +43,7 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
             <Input
               type="search"
               placeholder="Search"
-              className="pl-10 w-80  border-input"
+              className="pl-10 w-80 border-input"
             />
           </div>
 
@@ -54,41 +57,59 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
             </Badge>
           </Button>
 
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                className="flex items-center space-x-3 h-auto p-2"
-              >
-                <Avatar className="w-8 h-8">
-                  <AvatarImage
-                    src="/placeholder.svg?height=32&width=32"
-                    alt="William Alexander"
-                  />
-                  <AvatarFallback className="bg-primary text-primary-foreground">
-                    AS
-                  </AvatarFallback>
-                </Avatar>
-                <div className="hidden md:block text-left">
-                  <p className="text-sm font-medium text-foreground">
-                    Adarsh Singh
-                  </p>
-                  <p className="text-xs text-muted-foreground">Expert user</p>
-                </div>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56">
-              <DropdownMenuLabel>My Account</DropdownMenuLabel>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem>Profile</DropdownMenuItem>
-              <DropdownMenuItem>Settings</DropdownMenuItem>
-              <DropdownMenuItem>Support</DropdownMenuItem>
-              <DropdownMenuSeparator />
-              <DropdownMenuItem className="text-destructive">
-                Log out
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          {/* CONDITIONAL RENDERING */}
+          {status === "loading" ? (
+            <p>Loading...</p>
+          ) : session ? (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button
+                  variant="ghost"
+                  className="flex items-center space-x-3 h-auto p-2"
+                >
+                  <Avatar className="w-8 h-8">
+                    <AvatarImage
+                      src={
+                        session.user?.image ||
+                        "/placeholder.svg?height=32&width=32"
+                      }
+                      alt={session.user?.name || "User"}
+                    />
+                    <AvatarFallback className="bg-primary text-primary-foreground">
+                      {session.user?.name?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="hidden md:block text-left">
+                    <p className="text-sm font-medium text-foreground">
+                      {session.user?.name || "User"}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      {session.user?.email || ""}
+                    </p>
+                  </div>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-56">
+                <DropdownMenuLabel>My Account</DropdownMenuLabel>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem>Profile</DropdownMenuItem>
+                <DropdownMenuItem>Settings</DropdownMenuItem>
+                <DropdownMenuItem>Support</DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem
+                  className="text-destructive"
+                  onClick={() => signOut()}
+                >
+                  Log out
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          ) : (
+            <>
+              <Button onClick={() => signIn()}>Login</Button>
+              <Button>Get Started</Button>
+            </>
+          )}
         </div>
       </div>
     </header>
