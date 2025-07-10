@@ -30,7 +30,7 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
             className="lg:hidden mr-2"
             onClick={onMenuClick}
           >
-            <Menu className="w-5 h-5" />
+            <Menu className="w-5 h-5 text-gray-950" />
           </Button>
         </div>
 

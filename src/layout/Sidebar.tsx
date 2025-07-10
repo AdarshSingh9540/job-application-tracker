@@ -12,19 +12,27 @@ import {
   CreditCard,
   Settings,
   LogOut,
+  UserRoundPlus,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import logo from "../../public/programmer.png";
 import Image from "next/image";
+import { SiGnuprivacyguard } from "react-icons/si";
+import { GrDocumentStore } from "react-icons/gr";
+
 const mainSidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: Users, label: "My Guild", href: "/guild" },
-  { icon: FileText, label: "Content Feed", href: "/content" },
-  { icon: Gift, label: "My Offerings", href: "/offerings" },
+  { icon: UserRoundPlus, label: "Add Application", href: "/application" },
+  { icon: FileText, label: "Applcation Status", href: "/status" },
+  {
+    icon: SiGnuprivacyguard,
+    label: "Personal Assests",
+    href: "/personal-assest",
+  },
   { icon: MessageCircle, label: "Chats", href: "/chat" },
-  { icon: Calendar, label: "Bookings", href: "/bookings" },
-  { icon: CreditCard, label: "Payments", href: "/payments" },
+  { icon: Calendar, label: "Add Questions", href: "/add-question" },
+  { icon: GrDocumentStore, label: "Question Bank", href: "/question-bank" },
 ];
 
 const bottomSidebarItems = [
@@ -63,7 +71,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
               src={logo}
               alt="GuildUp Logo"
               width={40}
-              height={40}
+              height={60}
               className="rounded-md"
             />
             <span className="text-lg font-bold text-gray-900 mx-3">
