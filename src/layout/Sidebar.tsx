@@ -23,7 +23,7 @@ import { GrDocumentStore } from "react-icons/gr";
 
 const mainSidebarItems = [
   { icon: LayoutDashboard, label: "Dashboard", href: "/" },
-  { icon: UserRoundPlus, label: "Add Application", href: "/application" },
+  { icon: UserRoundPlus, label: "Add Application", href: "/add-application" },
   { icon: FileText, label: "Applcation Status", href: "/status" },
   {
     icon: SiGnuprivacyguard,
