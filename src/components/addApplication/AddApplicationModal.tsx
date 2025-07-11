@@ -1,7 +1,6 @@
 "use client";
 
-import React from "react";
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -13,18 +12,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import {
   Plus,
-  Trash2,
   Building2,
   Calendar,
   DollarSign,
   MapPin,
   User,
   FileText,
-  MessageSquare,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -52,6 +48,7 @@ interface JobApplication {
   jd: string;
   companyProfileLink: string;
   interviewQuestions: InterviewQuestion[];
+  userId: String;
 }
 
 const statusOptions = [
@@ -73,15 +70,6 @@ const statusOptions = [
   },
   { value: "selected", label: "Selected", color: "bg-green-500" },
   { value: "rejected", label: "Rejected", color: "bg-red-500" },
-];
-
-const questionCategories = [
-  "Technical",
-  "Behavioral",
-  "Company Culture",
-  "Problem Solving",
-  "Experience",
-  "Other",
 ];
 
 interface AddApplicationModalProps {
@@ -109,13 +97,9 @@ export default function AddApplicationModal({
     jd: "",
     companyProfileLink: "",
     interviewQuestions: [],
-  });
-  const [newQuestion, setNewQuestion] = useState({
-    question: "",
-    category: "Technical",
+    userId: "68703dbdb65b9f8c39febb6e",
   });
 
-  // Update form when editing application changes
   useEffect(() => {
     if (editingApplication) {
       setCurrentApplication(editingApplication);
@@ -128,32 +112,7 @@ export default function AddApplicationModal({
     setCurrentApplication((prev) => ({ ...prev, [field]: value }));
   };
 
-  const addInterviewQuestion = () => {
-    if (!newQuestion.question.trim()) return;
-
-    const question: InterviewQuestion = {
-      id: Date.now().toString(),
-      question: newQuestion.question,
-      category: newQuestion.category,
-    };
-
-    setCurrentApplication((prev) => ({
-      ...prev,
-      interviewQuestions: [...(prev.interviewQuestions || []), question],
-    }));
-
-    setNewQuestion({ question: "", category: "Technical" });
-  };
-
-  const removeInterviewQuestion = (questionId: string) => {
-    setCurrentApplication((prev) => ({
-      ...prev,
-      interviewQuestions:
-        prev.interviewQuestions?.filter((q) => q.id !== questionId) || [],
-    }));
-  };
-
-  const saveApplication = () => {
+  const saveApplication = async () => {
     if (!currentApplication.company || !currentApplication.role) {
       toast.error("Missing Information", {
         description: "Please fill in company name and role.",
@@ -161,10 +120,9 @@ export default function AddApplicationModal({
       return;
     }
 
-    const application: JobApplication = {
-      id: editingApplication ? editingApplication.id : Date.now().toString(),
-      company: currentApplication.company!,
-      role: currentApplication.role!,
+    const payload = {
+      company: currentApplication.company,
+      role: currentApplication.role,
       location: currentApplication.location || "",
       stipend: currentApplication.stipend || "",
       applicationDate:
@@ -173,21 +131,44 @@ export default function AddApplicationModal({
       status: currentApplication.status || "applied",
       jd: currentApplication.jd || "",
       companyProfileLink: currentApplication.companyProfileLink || "",
-      interviewQuestions: currentApplication.interviewQuestions || [],
+      userId: "68703dbdb65b9f8c39febb6e",
     };
 
-    onSave(application);
-    resetForm();
-    onClose();
+    try {
+      const res = await fetch(
+        "http://localhost:8080/api/v1/applications/add-application",
+        {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(payload),
+        }
+      );
 
-    toast.success(
-      editingApplication ? "Application Updated" : "Application Added",
-      {
-        description: editingApplication
-          ? "Job application has been updated successfully."
-          : "New job application has been added to your tracker.",
+      if (!res.ok) {
+        throw new Error("Failed to save application");
       }
-    );
+
+      const data = await res.json();
+
+      toast.success("Application Added", {
+        description: "New job application has been added to your tracker.",
+      });
+
+      resetForm();
+      onClose();
+
+      // optionally pass the saved data back
+      if (onSave) {
+        onSave(data.data); // backend sends { message, data: savedApplication }
+      }
+    } catch (err) {
+      console.error(err);
+      toast.error("Failed to save application", {
+        description: err.message,
+      });
+    }
   };
 
   const resetForm = () => {
@@ -238,17 +219,34 @@ export default function AddApplicationModal({
                 onChange={(e) => handleInputChange("company", e.target.value)}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="role" className="flex items-center gap-2">
                 <User className="w-4 h-4" />
                 Role *
               </Label>
-              <Input
-                id="role"
-                placeholder="e.g., Software Engineer"
+              <Select
                 value={currentApplication.role || ""}
-                onChange={(e) => handleInputChange("role", e.target.value)}
-              />
+                onValueChange={(value) => handleInputChange("role", value)}
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Role" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="frontend-developer">
+                    Frontend Developer
+                  </SelectItem>
+                  <SelectItem value="backend-developer">
+                    Backend Developer
+                  </SelectItem>
+                  <SelectItem value="fullstack-developer">
+                    Full Stack Developer
+                  </SelectItem>
+                  <SelectItem value="software-engineer">
+                    Software Engineer
+                  </SelectItem>
+                </SelectContent>
+              </Select>
             </div>
           </div>
 
@@ -265,6 +263,7 @@ export default function AddApplicationModal({
                 onChange={(e) => handleInputChange("location", e.target.value)}
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="stipend" className="flex items-center gap-2">
                 <DollarSign className="w-4 h-4" />
@@ -294,14 +293,15 @@ export default function AddApplicationModal({
                 }
               />
             </div>
+
             <div className="space-y-2">
               <Label htmlFor="status">Application Status</Label>
               <Select
                 value={currentApplication.status || "applied"}
                 onValueChange={(value) => handleInputChange("status", value)}
               >
-                <SelectTrigger>
-                  <SelectValue />
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select Status" />
                 </SelectTrigger>
                 <SelectContent>
                   {statusOptions.map((option) => (

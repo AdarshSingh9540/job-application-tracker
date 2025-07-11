@@ -49,20 +49,19 @@ export default function AddApplication() {
 
   const handleDelete = (id: string) => {
     setApplications((prev) => prev.filter((app) => app.id !== id));
-    toast({
-      title: "Application Deleted",
-      description: "Job application has been removed from your tracker.",
+    toast.success("Application Deleted", {
+      description: "Deleted successfully!",
     });
   };
 
-  const getStatusBadge = (status: string) => {
-    const statusOption = statusOptions.find((opt) => opt.value === status);
-    return (
-      <Badge className={`${statusOption?.color} text-white`}>
-        {statusOption?.label}
-      </Badge>
-    );
-  };
+  //   const getStatusBadge = (status: string) => {
+  //     const statusOption = statusOptions.find((opt) => opt.value === status);
+  //     return (
+  //       <Badge className={`${statusOption?.color} text-white`}>
+  //         {statusOption?.label}
+  //       </Badge>
+  //     );
+  //   };
   return (
     <div>
       <div className="flex justify-between mx-auto">
