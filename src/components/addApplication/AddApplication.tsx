@@ -64,7 +64,7 @@ export default function AddApplication() {
   //   };
   return (
     <div>
-      <div className="flex justify-between mx-auto">
+      <div className="flex justify-between mx-auto mb-8">
         <h1 className="font-semibold text-gray-800 text-xl">
           Add Job Application
         </h1>

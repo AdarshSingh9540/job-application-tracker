@@ -64,3 +64,49 @@ export const getAllApplications  = async(req,res)=>{
     res.status(500).json({ error: "Server error" });
   }
 }
+
+export const updateApplication = async (req, res) => {
+  try {
+    const { id } = req.params; // application id
+    const updateData = req.body;
+
+    const updatedApplication = await Company.findByIdAndUpdate(
+      id,
+      updateData,
+      { new: true, runValidators: true }
+    );
+
+    if (!updatedApplication) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    res.status(200).json({
+      message: "Application updated successfully",
+      data: updatedApplication,
+    });
+  } catch (err) {
+    console.error("Error updating application:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
+
+
+export const deleteApplication = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const deletedApplication = await Company.findByIdAndDelete(id);
+
+    if (!deletedApplication) {
+      return res.status(404).json({ error: "Application not found" });
+    }
+
+    res.status(200).json({
+      message: "Application deleted successfully",
+      data: deletedApplication,
+    });
+  } catch (err) {
+    console.error("Error deleting application:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
