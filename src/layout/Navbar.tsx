@@ -46,7 +46,6 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
               className="pl-10 w-80 border-input"
             />
           </div>
-
           <Button variant="ghost" size="sm" className="relative">
             <Bell className="w-5 h-5 text-muted-foreground" />
             <Badge
@@ -57,7 +56,6 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
             </Badge>
           </Button>
 
-          {/* CONDITIONAL RENDERING */}
           {status === "loading" ? (
             <p>Loading...</p>
           ) : session ? (
@@ -65,7 +63,7 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
               <DropdownMenuTrigger asChild>
                 <Button
                   variant="ghost"
-                  className="flex items-center space-x-3 h-auto p-2"
+                  className="flex items-center space-x-1 h-auto p-2 cursor-pointer"
                 >
                   <Avatar className="w-8 h-8">
                     <AvatarImage
@@ -82,9 +80,6 @@ export function Navbar({ onMenuClick, title = "Dashboard" }: NavbarProps) {
                   <div className="hidden md:block text-left">
                     <p className="text-sm font-medium text-foreground">
                       {session.user?.name || "User"}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      {session.user?.email || ""}
                     </p>
                   </div>
                 </Button>

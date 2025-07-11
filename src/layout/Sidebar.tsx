@@ -13,6 +13,7 @@ import {
   Settings,
   LogOut,
   UserRoundPlus,
+  LucideChevronsUpDown,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -20,14 +21,16 @@ import logo from "../../public/programmer.png";
 import Image from "next/image";
 import { SiGnuprivacyguard } from "react-icons/si";
 import { GrDocumentStore } from "react-icons/gr";
-
+import { signOut, signIn, useSession } from "next-auth/react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { CgHome } from "react-icons/cg";
 const mainSidebarItems = [
-  { icon: LayoutDashboard, label: "Dashboard", href: "/" },
+  { icon: CgHome, label: "Dashboard", href: "/" },
   { icon: UserRoundPlus, label: "Add Application", href: "/add-application" },
-  { icon: FileText, label: "Applcation Status", href: "/status" },
+  { icon: FileText, label: "Application Status", href: "/status" },
   {
     icon: SiGnuprivacyguard,
-    label: "Personal Assests",
+    label: "Personal Assets",
     href: "/personal-assest",
   },
   { icon: MessageCircle, label: "Chats", href: "/chat" },
@@ -37,7 +40,8 @@ const mainSidebarItems = [
 
 const bottomSidebarItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
-  { icon: LogOut, label: "Logout", href: "/logout" },
+  // Logout will be handled explicitly
+  // { icon: LogOut, label: "Logout", href: null },
 ];
 
 interface SidebarProps {
@@ -47,6 +51,9 @@ interface SidebarProps {
 
 export function Sidebar({ isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
+  const { data: session, status } = useSession();
+
+  const isLoading = status === "loading";
 
   return (
     <>
@@ -65,8 +72,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           isOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <div className="flex items-center justify-center h-16  ">
-          <Link href="/" className="flex items-center ">
+        <div className="flex items-center justify-center h-16">
+          <Link href="/" className="flex items-center">
             <Image
               src={logo}
               alt="GuildUp Logo"
@@ -83,7 +90,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
         {/* Navigation */}
         <div className="flex flex-col h-full">
           {/* Main Navigation */}
-          <nav className="mt-8 px-4 flex-1">
+          <nav className="mt-4 px-4 flex-1">
             <ul className="space-y-2">
               {mainSidebarItems.map((item) => {
                 const isActive = pathname === item.href;
@@ -98,7 +105,7 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                       )}
                     >
                       <Link href={item.href}>
-                        <item.icon className="w-5 h-5 mr-3" />
+                        <item.icon className="w-6 h-6 mr-2" />
                         {item.label}
                       </Link>
                     </Button>
@@ -111,6 +118,8 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
           {/* Bottom Navigation */}
           <nav className="px-4 pb-20">
             <ul className="space-y-2">
+              {/* User Info */}
+
               {bottomSidebarItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
@@ -123,14 +132,51 @@ export function Sidebar({ isOpen, onClose }: SidebarProps) {
                         isActive && "bg-primary/80 text-primary-foreground"
                       )}
                     >
-                      <Link href={item.href}>
-                        <item.icon className="w-5 h-5 mr-3" />
+                      <Link href={item.href!}>
+                        <item.icon className="w-6 h-6 mr-2" />
                         {item.label}
                       </Link>
                     </Button>
                   </li>
                 );
               })}
+              <div className=" mt-4">
+                {isLoading ? (
+                  <p>Loading user...</p>
+                ) : session?.user ? (
+                  <div className="flex items-center text-white space-x-2 p-2 rounded">
+                    <Avatar className="h-8 w-8 rounded-sm">
+                      <AvatarImage
+                        src={session.user.image || ""}
+                        alt={session.user.name || ""}
+                        className="rounded-none"
+                      />
+                      <AvatarFallback>
+                        {session.user.name?.[0] || "U"}
+                      </AvatarFallback>
+                    </Avatar>
+
+                    <div className="flex justify-center items-center ">
+                      <div>
+                        {" "}
+                        <p className="text-sm font-medium">
+                          {session.user.name}
+                        </p>
+                        <p className="text-xs">{session.user.email}</p>
+                      </div>
+                      <LucideChevronsUpDown className="ml-2 h-4 w-4 cursor-pointer" />
+                    </div>
+                  </div>
+                ) : (
+                  <Button
+                    className="w-full mt-2"
+                    onClick={() => signIn()}
+                    variant="secondary"
+                  >
+                    Login
+                  </Button>
+                )}
+              </div>
             </ul>
           </nav>
         </div>
