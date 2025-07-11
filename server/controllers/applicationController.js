@@ -43,3 +43,24 @@ export const addApplication = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+
+export const getAllApplications  = async(req,res)=>{
+  try {
+    const { userId } = req.params;
+
+    if (!userId) {
+      return res.status(400).json({ error: "userId param is required" });
+    }
+
+    const applications = await Company.find({ userId });
+
+    return res.status(200).json({
+      message: "Applications fetched successfully",
+      data: applications,
+    });
+  } catch (err) {
+    console.error("Error fetching applications:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+}
