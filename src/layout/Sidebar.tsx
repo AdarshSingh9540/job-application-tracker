@@ -27,7 +27,7 @@ import { CgHome } from "react-icons/cg";
 const mainSidebarItems = [
   { icon: CgHome, label: "Dashboard", href: "/" },
   { icon: UserRoundPlus, label: "Add Application", href: "/add-application" },
-  { icon: FileText, label: "Application Status", href: "/status" },
+  { icon: FileText, label: "Application Status", href: "/application-status" },
   {
     icon: SiGnuprivacyguard,
     label: "Personal Assets",
