@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { DashboardLayout } from "@/layout/DashBoardLayout";
 import SessionProvider from "@/components/SessionProvider";
+import { Toaster } from "sonner";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -30,7 +31,10 @@ export default function RootLayout({
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
         <SessionProvider>
-          <DashboardLayout>{children}</DashboardLayout>
+          <DashboardLayout>
+            {children}
+            <Toaster richColors position="top-center" />
+          </DashboardLayout>
         </SessionProvider>
       </body>
     </html>

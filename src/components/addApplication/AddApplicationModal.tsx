@@ -31,45 +31,27 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-interface InterviewQuestion {
-  id: string;
-  question: string;
-  category: string;
-}
-
 interface JobApplication {
-  id: string;
+  id?: string;
   company: string;
   role: string;
-  location: string;
-  stipend: string;
-  applicationDate: string;
-  status: string;
-  jd: string;
-  companyProfileLink: string;
-  interviewQuestions: InterviewQuestion[];
-  userId: String;
+  location?: string;
+  stipend?: string;
+  applicationDate?: string;
+  status?: string;
+  jd?: string;
+  companyProfileLink?: string;
+  interviewQuestions?: any[];
+  userId: string;
 }
 
 const statusOptions = [
-  { value: "applied", label: "Applied", color: "bg-blue-500" },
-  {
-    value: "resume-screening",
-    label: "Resume Screening",
-    color: "bg-yellow-500",
-  },
-  {
-    value: "interview-process",
-    label: "Interview Process",
-    color: "bg-purple-500",
-  },
-  {
-    value: "waiting-result",
-    label: "Waiting for Result",
-    color: "bg-orange-500",
-  },
-  { value: "selected", label: "Selected", color: "bg-green-500" },
-  { value: "rejected", label: "Rejected", color: "bg-red-500" },
+  { value: "applied", label: "Applied" },
+  { value: "resume-screening", label: "Resume Screening" },
+  { value: "interview-process", label: "Interview Process" },
+  { value: "waiting-result", label: "Waiting for Result" },
+  { value: "selected", label: "Selected" },
+  { value: "rejected", label: "Rejected" },
 ];
 
 interface AddApplicationModalProps {
@@ -79,15 +61,15 @@ interface AddApplicationModalProps {
   editingApplication?: JobApplication | null;
 }
 
+const USER_ID = "68703dbdb65b9f8c39febb6e"; // replace with dynamic
+
 export default function AddApplicationModal({
   isOpen,
   onClose,
   onSave,
   editingApplication,
 }: AddApplicationModalProps) {
-  const [currentApplication, setCurrentApplication] = useState<
-    Partial<JobApplication>
-  >({
+  const [currentApplication, setCurrentApplication] = useState<JobApplication>({
     company: "",
     role: "",
     location: "",
@@ -97,7 +79,7 @@ export default function AddApplicationModal({
     jd: "",
     companyProfileLink: "",
     interviewQuestions: [],
-    userId: "68703dbdb65b9f8c39febb6e",
+    userId: USER_ID,
   });
 
   useEffect(() => {
@@ -108,8 +90,23 @@ export default function AddApplicationModal({
     }
   }, [editingApplication, isOpen]);
 
-  const handleInputChange = (field: string, value: string) => {
+  const handleInputChange = (field: keyof JobApplication, value: any) => {
     setCurrentApplication((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const resetForm = () => {
+    setCurrentApplication({
+      company: "",
+      role: "",
+      location: "",
+      stipend: "",
+      applicationDate: "",
+      status: "applied",
+      jd: "",
+      companyProfileLink: "",
+      interviewQuestions: [],
+      userId: USER_ID,
+    });
   };
 
   const saveApplication = async () => {
@@ -131,58 +128,52 @@ export default function AddApplicationModal({
       status: currentApplication.status || "applied",
       jd: currentApplication.jd || "",
       companyProfileLink: currentApplication.companyProfileLink || "",
-      userId: "68703dbdb65b9f8c39febb6e",
+      userId: USER_ID,
     };
 
     try {
-      const res = await fetch(
-        "http://localhost:8080/api/v1/applications/add-application",
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(payload),
-        }
-      );
-
-      if (!res.ok) {
-        throw new Error("Failed to save application");
+      let res;
+      if (editingApplication && currentApplication.id) {
+        // Update existing
+        res = await fetch(
+          `http://localhost:8080/api/v1/applications/update-application/${currentApplication.id}`,
+          {
+            method: "PUT", // or PATCH based on your backend
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
+      } else {
+        // Create new
+        res = await fetch(
+          "http://localhost:8080/api/v1/applications/add-application",
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          }
+        );
       }
+
+      if (!res.ok) throw new Error("Failed to save application");
 
       const data = await res.json();
 
-      toast.success("Application Added", {
-        description: "New job application has been added to your tracker.",
-      });
+      toast.success(
+        editingApplication ? "Application Updated" : "Application Added",
+        {
+          description: `Application successfully ${
+            editingApplication ? "updated" : "added"
+          }.`,
+        }
+      );
 
+      onSave(data.data); // send saved app back to parent
       resetForm();
       onClose();
-
-      // optionally pass the saved data back
-      if (onSave) {
-        onSave(data.data); // backend sends { message, data: savedApplication }
-      }
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to save application", {
-        description: err.message,
-      });
+    } catch (error: any) {
+      toast.error("Failed to save application", { description: error.message });
     }
-  };
-
-  const resetForm = () => {
-    setCurrentApplication({
-      company: "",
-      role: "",
-      location: "",
-      stipend: "",
-      applicationDate: "",
-      status: "applied",
-      jd: "",
-      companyProfileLink: "",
-      interviewQuestions: [],
-    });
   };
 
   const handleClose = () => {
@@ -305,11 +296,7 @@ export default function AddApplicationModal({
                 </SelectTrigger>
                 <SelectContent>
                   {statusOptions.map((option) => (
-                    <SelectItem
-                      key={option.value}
-                      value={option.value}
-                      className="w-full"
-                    >
+                    <SelectItem key={option.value} value={option.value}>
                       {option.label}
                     </SelectItem>
                   ))}

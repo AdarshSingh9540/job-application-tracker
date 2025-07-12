@@ -1,12 +1,17 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
 import { IoMdAdd } from "react-icons/io";
 import AddApplicationModal from "./AddApplicationModal";
-import { Building2 } from "lucide-react";
-import ApplicationList from "./ApplicationList";
 import { toast } from "sonner";
-import { Badge } from "../ui/badge";
+import ApplicationList from "./ApplicationList";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "../ui/dialog";
 
 interface JobApplication {
   id: string;
@@ -21,87 +26,147 @@ interface JobApplication {
   interviewQuestions: { id: string; question: string; category: string }[];
 }
 
+const USER_ID = "68703dbdb65b9f8c39febb6e"; // replace with your dynamic userId
+
 export default function AddApplication() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingApplication, setEditingApplication] =
     useState<JobApplication | null>(null);
-  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
-  // Function to open the modal (for adding a new application)
+
+  const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
+  const [applicationToDelete, setApplicationToDelete] =
+    useState<JobApplication | null>(null);
+
+  // Fetch applications
+  useEffect(() => {
+    const fetchApplications = async () => {
+      try {
+        const res = await fetch(
+          `http://localhost:8080/api/v1/applications/fetch-application/${USER_ID}`
+        );
+        if (!res.ok) throw new Error("Failed to fetch applications");
+        const data = await res.json();
+        setApplications(data.data || []);
+      } catch (err) {
+        toast.error("Failed to load applications", {
+          description: err.message,
+        });
+      }
+    };
+    fetchApplications();
+  }, []);
+
   const handleOpenModal = () => {
-    setEditingApplication(null); // Clear editing state for new application
+    setEditingApplication(null);
     setIsModalOpen(true);
   };
 
   const handleEdit = (application: JobApplication) => {
     setEditingApplication(application);
-    setIsEditModalOpen(true);
+    setIsModalOpen(true);
   };
 
-  const handleEditSave = (application: JobApplication) => {
-    const updatedApplications = applications.map((app) =>
-      app.id === application.id ? application : app
-    );
-    setApplications(updatedApplications);
-    setIsEditModalOpen(false);
-    setEditingApplication(null);
+  const handleDeleteRequest = (application: JobApplication) => {
+    setApplicationToDelete(application);
+    setDeleteConfirmOpen(true);
   };
 
-  const handleDelete = (id: string) => {
-    setApplications((prev) => prev.filter((app) => app.id !== id));
-    toast.success("Application Deleted", {
-      description: "Deleted successfully!",
+  const handleConfirmDelete = async () => {
+    if (!applicationToDelete) return;
+
+    // console.log("hskjenlkjsrlkynkklk", applicationToDelete);
+    try {
+      const res = await fetch(
+        `http://localhost:8080/api/v1/applications/delete-application/${applicationToDelete}`,
+        { method: "DELETE" }
+      );
+
+      if (!res.ok) throw new Error("Delete failed");
+
+      setApplications((prev) =>
+        prev.filter((app) => app.id !== applicationToDelete.id)
+      );
+
+      toast.success("Application Deleted", {
+        description: "Deleted successfully!",
+      });
+    } catch (error: any) {
+      toast.error("Failed to delete application", {
+        description: error.message,
+      });
+    } finally {
+      setDeleteConfirmOpen(false);
+      setApplicationToDelete(null);
+    }
+  };
+
+  const handleSave = (application: JobApplication) => {
+    setApplications((prev) => {
+      const exists = prev.find((app) => app.id === application.id);
+      if (exists) {
+        return prev.map((app) =>
+          app.id === application.id ? application : app
+        );
+      } else {
+        return [...prev, application];
+      }
     });
   };
 
-  //   const getStatusBadge = (status: string) => {
-  //     const statusOption = statusOptions.find((opt) => opt.value === status);
-  //     return (
-  //       <Badge className={`${statusOption?.color} text-white`}>
-  //         {statusOption?.label}
-  //       </Badge>
-  //     );
-  //   };
   return (
     <div>
       <div className="flex justify-between mx-auto mb-8">
         <h1 className="font-semibold text-gray-800 text-xl">
           Add Job Application
         </h1>
-        <Button onClick={handleOpenModal} className="cursor-pointer">
-          Add Application <IoMdAdd className="mx-1 h-6 w-6 font-bold" />
+        <Button onClick={handleOpenModal}>
+          Add Application <IoMdAdd className="mx-1 h-6 w-6" />
         </Button>
       </div>
-      {/* <div className="text-center flex flex-col min-h-screen items-center justify-center py-8 text-gray-500">
-        <div className="border p-36 rounded-xl">
-          <Building2 className="w-16 h-16 mx-auto mb-4 opacity-50" />
-          <p>No applications yet. Click "Add Application" to get started!</p>
-        </div>
-      </div> */}
 
       <ApplicationList
         applications={applications}
         onEdit={handleEdit}
-        onDelete={handleDelete}
+        onDelete={handleDeleteRequest}
       />
+
       <AddApplicationModal
         isOpen={isModalOpen}
         onClose={() => {
           setIsModalOpen(false);
           setEditingApplication(null);
         }}
-        onSave={(application) => {
-          if (editingApplication) {
-            setApplications((prev) =>
-              prev.map((app) => (app.id === application.id ? application : app))
-            );
-          } else {
-            setApplications((prev) => [...prev, application]);
-          }
-          setIsModalOpen(false); // Close modal after saving
-        }}
-        editingApplication={editingApplication} // Uncommented to pass prop
+        onSave={handleSave}
+        editingApplication={editingApplication}
       />
+
+      {/* Delete Confirmation Modal */}
+      <Dialog open={deleteConfirmOpen} onOpenChange={setDeleteConfirmOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Delete Application</DialogTitle>
+            <DialogDescription>
+              Are you sure you want to delete the application for{" "}
+              <strong>{applicationToDelete?.company}</strong> -{" "}
+              <strong>{applicationToDelete?.role}</strong>? This action cannot
+              be undone.
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="flex justify-end gap-2 mt-4">
+            <Button
+              variant="outline"
+              onClick={() => setDeleteConfirmOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={handleConfirmDelete}>
+              Delete
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

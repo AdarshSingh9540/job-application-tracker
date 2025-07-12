@@ -98,9 +98,6 @@ export default function ApplicationList({
 
   const deleteApplication = (id: string) => {
     onDelete(id);
-    toast.success("Application Deleted", {
-      description: "Job application has been removed from your tracker.",
-    });
   };
 
   const getStatusBadge = (status: string) => {
