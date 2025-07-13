@@ -237,16 +237,16 @@ export default function ApplicationTracker() {
                   {chartData.map((item, index) => (
                     <div
                       key={index}
-                      className="flex items-center justify-between text-sm"
+                      className="flex items-center justify-between text-sm "
                     >
                       <div className="flex items-center gap-2">
                         <div
                           className="w-3 h-3 rounded-full"
                           style={{ backgroundColor: item.color }}
                         ></div>
-                        <span className="text-gray-600">{item.name}</span>
+                        <span className="">{item.name}</span>
                       </div>
-                      <span className="font-medium">{item.value}</span>
+                      <span className="font-medium ">{item.value}</span>
                     </div>
                   ))}
                 </div>

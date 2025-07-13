@@ -34,7 +34,7 @@ const mainSidebarItems = [
     href: "/personal-assest",
   },
   { icon: MessageCircle, label: "Chats", href: "/chat" },
-  { icon: Calendar, label: "Add Questions", href: "/add-question" },
+  { icon: Calendar, label: "Add Questions", href: "/add-questions" },
   { icon: GrDocumentStore, label: "Question Bank", href: "/question-bank" },
 ];
 
