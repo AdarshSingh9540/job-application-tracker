@@ -16,9 +16,6 @@ const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://d3bfa506dd88.ngrok-free.
 // set webhook
 bot.telegram.setWebhook(WEBHOOK_URL).then(() => console.log("✅ Webhook set")).catch(console.error);
 
-mongoose.connect(process.env.MONGO_URI)
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch(err => console.error("❌ MongoDB error:", err));
 
 // 🚀 START COMMAND
 bot.start(async (ctx) => {
@@ -30,7 +27,6 @@ bot.start(async (ctx) => {
   const user = await users.findOne({ telegramId });
 
   if (!user) {
-    // user not linked → send link
     ctx.reply(
       `👋 Hi ${ctx.from.first_name || ""}! Please link your account first:\n\n` +
       `👉 [Click here to link](https://crossing-axis-athens-functional.trycloudflare.com/link-telegram?telegramId=${telegramId})`,
@@ -39,7 +35,6 @@ bot.start(async (ctx) => {
     return;
   }
 
-  // user already linked → proceed
   userStates[telegramId] = { step: "greet" };
 
   await ctx.reply(`Welcome back ${user.name || ""}! 👋 Would you like to add a job application?`, {
@@ -61,16 +56,18 @@ bot.on("callback_query", async (ctx) => {
     return;
   }
 
-  if (userStates[telegramId].step === "greet") {
+  const state = userStates[telegramId];
+
+  if (state.step === "greet") {
     if (message === "yes") {
-      userStates[telegramId].step = "company";
+      state.step = "company";
       await ctx.reply("Please enter the company name.");
     } else {
       await ctx.reply("Thank you! Feel free to return anytime. 😊");
       delete userStates[telegramId];
     }
     ctx.answerCbQuery();
-  } else if (userStates[telegramId].step === "role") {
+  } else if (state.step === "role") {
     const roleMap = {
       "frontend-developer": "frontend-developer",
       "backend-developer": "backend-developer",
@@ -79,28 +76,33 @@ bot.on("callback_query", async (ctx) => {
     };
     const role = roleMap[message];
     if (role) {
-      userStates[telegramId].role = role;
-      userStates[telegramId].step = "link";
-      userStates[telegramId].applicationDate = new Date().toLocaleDateString();
-      await ctx.reply(`Role selected: ${role}\nWould you like to add a company link or JD?`, {
-        reply_markup: {
-          inline_keyboard: [
-            [{ text: "Yes", callback_data: "yes" }, { text: "No", callback_data: "no" }],
-          ],
-        },
-      });
-      ctx.answerCbQuery();
+      state.role = role;
+      state.applicationDate = new Date().toLocaleDateString();
+
+      // queue optional fields
+      state.optionalQueue = ["location", "stipend", "companyProfileLink", "jd"];
+      state.step = "askOptional";
+      await askNextOptionalField(ctx, telegramId);
     }
-  } else if (userStates[telegramId].step === "link") {
-    userStates[telegramId].link = message === "yes" ? null : undefined;
+    ctx.answerCbQuery();
+  } else if (state.step === "link") {
+    state.link = message === "yes" ? null : undefined;
     if (message === "yes") {
-      userStates[telegramId].step = "linkInput";
+      state.step = "linkInput";
       await ctx.reply("Please send the company link or JD.");
     } else {
-      await saveApplication(telegramId, userStates[telegramId]);
-      await ctx.reply("✅ Application saved! Thank you! 🎉");
-      delete userStates[telegramId];
+      // proceed to optional questions
+      state.optionalQueue = ["location", "stipend", "companyProfileLink", "jd"];
+      state.step = "askOptional";
+      await askNextOptionalField(ctx, telegramId);
     }
+    ctx.answerCbQuery();
+  } else if (message === "optional_yes") {
+    state.step = "optionalInput";
+    await ctx.reply(`Please enter the ${state.currentOptional}.`);
+    ctx.answerCbQuery();
+  } else if (message === "optional_no") {
+    await askNextOptionalField(ctx, telegramId);
     ctx.answerCbQuery();
   }
 });
@@ -112,9 +114,11 @@ bot.on("text", async (ctx) => {
 
   if (!userStates[telegramId]) return;
 
-  if (userStates[telegramId].step === "company") {
-    userStates[telegramId].company = message;
-    userStates[telegramId].step = "role";
+  const state = userStates[telegramId];
+
+  if (state.step === "company") {
+    state.company = message;
+    state.step = "role";
     await ctx.reply("Select a role:", {
       reply_markup: {
         inline_keyboard: [
@@ -125,15 +129,62 @@ bot.on("text", async (ctx) => {
         ],
       },
     });
-  } else if (userStates[telegramId].step === "linkInput") {
-    userStates[telegramId].link = message.includes("http")
+  } else if (state.step === "linkInput") {
+    state.link = message.includes("http")
       ? { companyProfileLink: message }
       : { jd: message };
-    await saveApplication(telegramId, userStates[telegramId]);
-    await ctx.reply("✅ Application saved with link/JD! Thank you! 🎉");
-    delete userStates[telegramId];
+
+    // proceed to optional questions
+    state.optionalQueue = ["location", "stipend", "companyProfileLink", "jd"];
+    state.step = "askOptional";
+    await askNextOptionalField(ctx, telegramId);
+  } else if (state.step === "optionalInput") {
+    const field = state.currentOptional;
+    if (field === "stipend") {
+      const stipend = parseFloat(message);
+      if (!isNaN(stipend)) {
+        state[field] = stipend;
+      } else {
+        await ctx.reply("Please enter a valid number for stipend.");
+        return;
+      }
+    } else {
+      state[field] = message;
+    }
+
+    await askNextOptionalField(ctx, telegramId);
   }
 });
+
+// ASK OPTIONAL FIELDS
+const askNextOptionalField = async (ctx, telegramId) => {
+  const state = userStates[telegramId];
+
+  if (!state.optionalQueue || state.optionalQueue.length === 0) {
+    await saveApplication(telegramId, state);
+    await ctx.reply("✅ Application saved! Thank you! 🎉");
+    delete userStates[telegramId];
+    return;
+  }
+
+  const nextField = state.optionalQueue.shift();
+  state.currentOptional = nextField;
+
+  const questionMap = {
+    location: "Do you want to add a location?",
+    stipend: "Do you want to add a stipend?",
+    companyProfileLink: "Do you want to add a company profile link?",
+    jd: "Do you want to add a job description?",
+  };
+
+  await ctx.reply(questionMap[nextField], {
+    reply_markup: {
+      inline_keyboard: [
+        [{ text: "Yes", callback_data: "optional_yes" }, { text: "No", callback_data: "optional_no" }],
+      ],
+    },
+  });
+};
 
 // SAVE APPLICATION
 const saveApplication = async (telegramId, data) => {
@@ -144,17 +195,25 @@ const saveApplication = async (telegramId, data) => {
 
   if (!user) throw new Error("User not linked yet!");
 
+  const applicationData = {
+    userId: user._id.toString(),
+    company: data.company,
+    role: data.role,
+    applicationDate: data.applicationDate,
+    status: "applied",
+  };
+
+  if (data.link?.companyProfileLink) applicationData.companyProfileLink = data.link.companyProfileLink;
+  if (data.link?.jd) applicationData.jd = data.link.jd;
+  if (data.location) applicationData.location = data.location;
+  if (data.stipend) applicationData.stipend = data.stipend;
+  if (data.companyProfileLink) applicationData.companyProfileLink = data.companyProfileLink;
+  if (data.jd) applicationData.jd = data.jd;
+
   const response = await fetch("http://localhost:8081/api/v1/applications/add-application", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      userId: user._id.toString(),
-      company: data.company,
-      role: data.role,
-      applicationDate: data.applicationDate,
-      ...data.link,
-      status: "applied",
-    }),
+    body: JSON.stringify(applicationData),
   });
 
   const result = await response.json();
