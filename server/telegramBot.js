@@ -2,25 +2,47 @@ import { Telegraf } from "telegraf";
 import express from "express";
 import bodyParser from "body-parser";
 import mongoose from "mongoose";
-import Company from "./models/company.model.js";
 
 const app = express();
 app.use(bodyParser.json());
 
-// Replace with your BotFather token or use env variable
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN || "8073142544:AAEkaZ3LMeHqOYv_De0uJ3T4Mg7NavXmlDI");
 
-let userStates = {}; // In-memory state (use Redis/Mongo for production)
+let userStates = {}; // in-memory state
 
 const PORT = process.env.PORT || 8080;
-const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://d3bfa506dd88.ngrok-free.app"; // Replace with ngrok URL
+const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://d3bfa506dd88.ngrok-free.app";
 
-bot.telegram.setWebhook(WEBHOOK_URL).then(() => console.log("Webhook set")).catch(err => console.error("Webhook error:", err));
+// set webhook
+bot.telegram.setWebhook(WEBHOOK_URL).then(() => console.log("✅ Webhook set")).catch(console.error);
 
-bot.start((ctx) => {
-  const from = ctx.from.id;
-  userStates[from] = { step: "greet" };
-  ctx.reply("Hello! 👋 Would you like to add a job application?", {
+mongoose.connect(process.env.MONGO_URI)
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch(err => console.error("❌ MongoDB error:", err));
+
+// 🚀 START COMMAND
+bot.start(async (ctx) => {
+  const telegramId = ctx.from.id.toString();
+
+  const db = mongoose.connection.db;
+  const users = db.collection("users");
+
+  const user = await users.findOne({ telegramId });
+
+  if (!user) {
+    // user not linked → send link
+    ctx.reply(
+      `👋 Hi ${ctx.from.first_name || ""}! Please link your account first:\n\n` +
+      `👉 [Click here to link](https://crossing-axis-athens-functional.trycloudflare.com/link-telegram?telegramId=${telegramId})`,
+      { parse_mode: "Markdown" }
+    );
+    return;
+  }
+
+  // user already linked → proceed
+  userStates[telegramId] = { step: "greet" };
+
+  await ctx.reply(`Welcome back ${user.name || ""}! 👋 Would you like to add a job application?`, {
     reply_markup: {
       inline_keyboard: [
         [{ text: "Yes", callback_data: "yes" }, { text: "No", callback_data: "no" }],
@@ -29,31 +51,37 @@ bot.start((ctx) => {
   });
 });
 
+// CALLBACK QUERIES
 bot.on("callback_query", async (ctx) => {
-  const from = ctx.from.id;
+  const telegramId = ctx.from.id.toString();
   const message = ctx.callbackQuery.data;
 
-  if (userStates[from]?.step === "greet") {
+  if (!userStates[telegramId]) {
+    ctx.answerCbQuery("Please start with /start");
+    return;
+  }
+
+  if (userStates[telegramId].step === "greet") {
     if (message === "yes") {
-      userStates[from].step = "company";
+      userStates[telegramId].step = "company";
       await ctx.reply("Please enter the company name.");
     } else {
       await ctx.reply("Thank you! Feel free to return anytime. 😊");
-      delete userStates[from];
+      delete userStates[telegramId];
     }
     ctx.answerCbQuery();
-  } else if (userStates[from]?.step === "role") {
+  } else if (userStates[telegramId].step === "role") {
     const roleMap = {
       "frontend-developer": "frontend-developer",
       "backend-developer": "backend-developer",
       "fullstack-developer": "fullstack-developer",
       "software-engineer": "software-engineer",
     };
-    const role = roleMap[message] || roleMap[ctx.message?.text.toLowerCase()];
+    const role = roleMap[message];
     if (role) {
-      userStates[from].role = role;
-      userStates[from].step = "link";
-      userStates[from].applicationDate = new Date().toLocaleDateString();
+      userStates[telegramId].role = role;
+      userStates[telegramId].step = "link";
+      userStates[telegramId].applicationDate = new Date().toLocaleDateString();
       await ctx.reply(`Role selected: ${role}\nWould you like to add a company link or JD?`, {
         reply_markup: {
           inline_keyboard: [
@@ -63,27 +91,30 @@ bot.on("callback_query", async (ctx) => {
       });
       ctx.answerCbQuery();
     }
-  } else if (userStates[from]?.step === "link") {
-    userStates[from].link = message === "yes" ? null : undefined;
+  } else if (userStates[telegramId].step === "link") {
+    userStates[telegramId].link = message === "yes" ? null : undefined;
     if (message === "yes") {
-      userStates[from].step = "linkInput";
+      userStates[telegramId].step = "linkInput";
       await ctx.reply("Please send the company link or JD.");
     } else {
-      await saveApplication(from, userStates[from]);
-      await ctx.reply("Application saved! Thank you! 🎉");
-      delete userStates[from];
+      await saveApplication(telegramId, userStates[telegramId]);
+      await ctx.reply("✅ Application saved! Thank you! 🎉");
+      delete userStates[telegramId];
     }
     ctx.answerCbQuery();
   }
 });
 
+// TEXT INPUTS
 bot.on("text", async (ctx) => {
-  const from = ctx.from.id;
+  const telegramId = ctx.from.id.toString();
   const message = ctx.message.text;
 
-  if (userStates[from]?.step === "company") {
-    userStates[from].company = message;
-    userStates[from].step = "role";
+  if (!userStates[telegramId]) return;
+
+  if (userStates[telegramId].step === "company") {
+    userStates[telegramId].company = message;
+    userStates[telegramId].step = "role";
     await ctx.reply("Select a role:", {
       reply_markup: {
         inline_keyboard: [
@@ -94,47 +125,46 @@ bot.on("text", async (ctx) => {
         ],
       },
     });
-  } else if (userStates[from]?.step === "linkInput") {
-    userStates[from].link = message.includes("http") ? { companyProfileLink: message } : { jd: message };
-    await saveApplication(from, userStates[from]);
-    await ctx.reply("Application saved with link/JD! Thank you! 🎉");
-    delete userStates[from];
+  } else if (userStates[telegramId].step === "linkInput") {
+    userStates[telegramId].link = message.includes("http")
+      ? { companyProfileLink: message }
+      : { jd: message };
+    await saveApplication(telegramId, userStates[telegramId]);
+    await ctx.reply("✅ Application saved with link/JD! Thank you! 🎉");
+    delete userStates[telegramId];
   }
 });
 
+// SAVE APPLICATION
+const saveApplication = async (telegramId, data) => {
+  const db = mongoose.connection.db;
+  const users = db.collection("users");
 
-const saveApplication = async (userId, data) => {
-  try {
-    console.log(JSON.stringify({
-      userId: String(userId),      
-        company: data.company,
-        role: data.role,
-        applicationDate: data.applicationDate,
-        ...data.link,
-        status: "applied",
-      }))
-    const response = await fetch(`
-http://localhost:8081/api/v1/applications/add-application`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-      userId: '68703dbdb65b9f8c39febb6e',      
-        company: data.company,
-        role: data.role,
-        applicationDate: data.applicationDate,
-        ...data.link,
-        status: "applied",
-      }),
-    });
-    const result = await response.json();
-    if (!response.ok) throw new Error(result.error || "Failed to save");
-    console.log("Application saved:", result);
-  } catch (err) {
-    console.error("Error saving application:", err);
-  }
+  const user = await users.findOne({ telegramId });
+
+  if (!user) throw new Error("User not linked yet!");
+
+  const response = await fetch("http://localhost:8081/api/v1/applications/add-application", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      userId: user._id.toString(),
+      company: data.company,
+      role: data.role,
+      applicationDate: data.applicationDate,
+      ...data.link,
+      status: "applied",
+    }),
+  });
+
+  const result = await response.json();
+
+  if (!response.ok) throw new Error(result.error || "Failed to save application");
+
+  console.log("✅ Application saved:", result);
 };
 
-// Handle webhook updates
+// WEBHOOK
 app.use(bot.webhookCallback('/webhook'));
 
 app.post("/webhook", (req, res) => {
@@ -143,7 +173,7 @@ app.post("/webhook", (req, res) => {
 });
 
 app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
+  console.log(`🚀 Server running on port ${PORT}`);
 });
 
 export default bot;

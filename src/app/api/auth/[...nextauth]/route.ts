@@ -1,11 +1,11 @@
 import client from "@/app/utilis/db";
-import NextAuth, { NextAuthOptions } from "next-auth";
+import NextAuth from "next-auth";
 import { MongoDBAdapter } from "@auth/mongodb-adapter";
 import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
-import { ObjectId } from "mongodb"; // Import ObjectId for MongoDB
+import { ObjectId } from "mongodb";
 
-const handler = NextAuth({
+export const authOptions = {
   adapter: MongoDBAdapter(client),
   providers: [
     CredentialsProvider({
@@ -20,19 +20,15 @@ const handler = NextAuth({
         }
 
         const db = client.db();
-        const usersCollection = db.collection("users"); // Assuming 'users' is the collection name
+        const usersCollection = db.collection("users");
         const user = await usersCollection.findOne({
           email: credentials.username,
         });
-        
-        if (!user) {
-          return null;
-        }
 
-        // Add password verification logic (e.g., using bcrypt)
-        // For demo, assuming password is correct
+        if (!user) return null;
+
         return {
-          id: user._id.toString(), // Convert ObjectId to string
+          id: user._id.toString(),
           name: user.name,
           email: user.email,
         };
@@ -44,7 +40,7 @@ const handler = NextAuth({
     }),
   ],
   callbacks: {
-    async signIn({ user, account, profile, credentials }) {
+    async signIn({ user, account, profile }) {
       if (account?.provider === "google") {
         const db = client.db();
         const usersCollection = db.collection("users");
@@ -53,31 +49,32 @@ const handler = NextAuth({
         });
 
         if (existingUser) {
-          return { ...user, id: existingUser._id.toString() }; // Return updated user object
+          return { ...user, id: existingUser._id.toString() };
         } else {
-          // Create new user if not exists
           const newUser = await usersCollection.insertOne({
             name: profile.name,
             email: profile.email,
             image: profile.picture,
             createdAt: new Date(),
           });
-          return { ...user, id: newUser.insertedId.toString() }; // Return new user with _id
+          return { ...user, id: newUser.insertedId.toString() };
         }
       }
-      return true; // Proceed with sign-in for other providers
+      return true;
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.sub; // Map the _id from token (set by adapter)
+        session.user.id = token.sub;
       }
       return session;
     },
   },
   secret: process.env.NEXTAUTH_SECRET,
   session: {
-    strategy: "jwt", // Use JWT strategy
+    strategy: "jwt",
   },
-});
+};
+
+const handler = NextAuth(authOptions);
 
 export { handler as GET, handler as POST };
