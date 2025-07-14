@@ -36,7 +36,7 @@ const QuestionBank = () => {
       try {
         setLoading(true);
         const response = await fetch(
-          "http://localhost:8080/api/v1/question/fetch-all-questions-with-visibility"
+          "http://localhost:8081/api/v1/question/fetch-all-questions-with-visibility"
         );
         if (!response.ok) throw new Error("Failed to fetch data");
         const data = await response.json();

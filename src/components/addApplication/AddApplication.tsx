@@ -43,7 +43,7 @@ export default function AddApplication() {
     const fetchApplications = async () => {
       try {
         const res = await fetch(
-          `http://localhost:8080/api/v1/applications/fetch-application/${USER_ID}`
+          `http://localhost:8081/api/v1/applications/fetch-application/${USER_ID}`
         );
         if (!res.ok) throw new Error("Failed to fetch applications");
         const data = await res.json();
@@ -78,7 +78,7 @@ export default function AddApplication() {
     // console.log("hskjenlkjsrlkynkklk", applicationToDelete);
     try {
       const res = await fetch(
-        `http://localhost:8080/api/v1/applications/delete-application/${applicationToDelete}`,
+        `http://localhost:8081/api/v1/applications/delete-application/${applicationToDelete}`,
         { method: "DELETE" }
       );
 

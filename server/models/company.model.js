@@ -39,5 +39,5 @@ const applicationSchema = new mongoose.Schema({
   applicationDate: String,
 });
 
-const Application = mongoose.model("Application", applicationSchema);
-export default Application;
+const Company = mongoose.model("Application", applicationSchema);
+export default Company;

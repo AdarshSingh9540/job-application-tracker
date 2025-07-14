@@ -136,7 +136,7 @@ export default function AddApplicationModal({
       if (editingApplication && currentApplication.id) {
         // Update existing
         res = await fetch(
-          `http://localhost:8080/api/v1/applications/update-application/${currentApplication.id}`,
+          `http://localhost:8081/api/v1/applications/update-application/${currentApplication.id}`,
           {
             method: "PUT", // or PATCH based on your backend
             headers: { "Content-Type": "application/json" },
@@ -146,7 +146,7 @@ export default function AddApplicationModal({
       } else {
         // Create new
         res = await fetch(
-          "http://localhost:8080/api/v1/applications/add-application",
+          "http://localhost:8081/api/v1/applications/add-application",
           {
             method: "POST",
             headers: { "Content-Type": "application/json" },

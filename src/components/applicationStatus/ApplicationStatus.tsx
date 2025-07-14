@@ -97,7 +97,7 @@ export default function ApplicationTracker() {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:8080/api/v1/applications/fetch-application/${userId}`
+        `http://localhost:8081/api/v1/applications/fetch-application/${userId}`
       );
 
       const mappedApplications = response.data.data.map((app: any) => ({

@@ -21,6 +21,10 @@ const handler = NextAuth({
 
         const db = client.db();
         const usersCollection = db.collection("users"); // Assuming 'users' is the collection name
+        await users.updateOne(
+          { _id: new ObjectId(userId) },
+          { $set: { telegramId: ctx.from.id } }
+        );
         const user = await usersCollection.findOne({
           email: credentials.username,
         });

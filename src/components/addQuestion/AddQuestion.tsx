@@ -70,7 +70,7 @@ export default function QuestionsPage() {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:8080/api/v1/question/fetch-questions/${userId}`
+        `http://localhost:8081/api/v1/question/fetch-questions/${userId}`
       );
       setQuestions(response.data.data);
       setError(null);
@@ -97,7 +97,7 @@ export default function QuestionsPage() {
         isPublic: formData.isPublic,
       };
       await axios.post(
-        "http://localhost:8080/api/v1/question/add-question",
+        "http://localhost:8081/api/v1/question/add-question",
         payload
       );
       toast.success("Question added successfully!");

@@ -66,7 +66,7 @@ export default function ApplicationList({
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:8080/api/v1/applications/fetch-application/68703dbdb65b9f8c39febb6e`
+        `http://localhost:8081/api/v1/applications/fetch-application/68703dbdb65b9f8c39febb6e`
       );
       // Map API response to match JobApplication interface
       const mappedApplications = response.data.data.map((app: any) => ({
