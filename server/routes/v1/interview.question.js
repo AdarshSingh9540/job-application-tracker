@@ -7,6 +7,7 @@ import {
   getQuestionById,
   updateQuestion,
   deleteQuestion,
+  getAllQuestionsWithVisibility,
 } from "../../controllers/questionController.js";
 
 const router = express.Router();
@@ -18,5 +19,5 @@ router.get("/fetch-public-questions", getPublicQuestions);
 router.get("/fetch-question/:id", getQuestionById);
 router.put("/update-question/:id", updateQuestion);
 router.delete("/delete-question/:id", deleteQuestion);
-
+router.get("/fetch-all-questions-with-visibility", getAllQuestionsWithVisibility);
 export default router;

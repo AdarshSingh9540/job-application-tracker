@@ -125,3 +125,25 @@ export const deleteQuestion = async (req, res) => {
     res.status(500).json({ error: "Server error" });
   }
 };
+
+export const getAllQuestionsWithVisibility = async (req, res) => {
+  try {
+    const questions = await InterviewQuestion.find();
+    const responseData = questions.map((question) => ({
+      _id: question._id,
+      userId: question.userId,
+      company: question.company,
+      question: question.isPublic ? question.question : null, // Hide private question text
+      isPublic: question.isPublic,
+      createdAt: question.createdAt,
+      __v: question.__v,
+    }));
+    return res.status(200).json({
+      message: "All questions fetched with visibility",
+      data: responseData,
+    });
+  } catch (err) {
+    console.error("Error fetching all questions with visibility:", err);
+    res.status(500).json({ error: "Server error" });
+  }
+};
