@@ -9,6 +9,7 @@ app.use(bodyParser.json());
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN || "8073142544:AAEkaZ3LMeHqOYv_De0uJ3T4Mg7NavXmlDI");
 
 let userStates = {}; // in-memory state
+let followUps = {}; // In-memory store for follow-up reminders (simplified)
 
 const PORT = process.env.PORT || 8080;
 const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://d3bfa506dd88.ngrok-free.app";
@@ -16,6 +17,9 @@ const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://d3bfa506dd88.ngrok-free.
 // set webhook
 bot.telegram.setWebhook(WEBHOOK_URL).then(() => console.log("✅ Webhook set")).catch(console.error);
 
+// Check for follow-ups every hour
+setInterval(() => checkFollowUps(), 60 * 60 * 1000); 
+// setInterval(() => checkFollowUps(), 10000);
 // 🚀 START COMMAND
 bot.start(async (ctx) => {
   const telegramId = ctx.from.id.toString();
@@ -291,6 +295,15 @@ const saveApplication = async (telegramId, data) => {
   if (!response.ok) throw new Error(result.error || "Failed to save application");
 
   console.log("✅ Application saved:", result);
+
+  // Schedule follow-up (2 days from applicationDate)
+  const followUpDate = new Date(data.applicationDate);
+  followUpDate.setDate(followUpDate.getDate() + 2);
+  followUps[result.data._id] = {
+    telegramId,
+    company: data.company,
+    followUpDate: followUpDate.toLocaleDateString(),
+  };
 };
 
 // FETCH APPLICATION STATUS
@@ -448,6 +461,17 @@ const displayApplicationDetails = async (ctx, telegramId) => {
     console.error("Error displaying application details:", err);
     await ctx.reply("Sorry, I couldn’t display the applications. Please try again later.");
     delete userStates[telegramId];
+  }
+};
+
+// CHECK FOLLOW-UPS
+const checkFollowUps = async () => {
+  const today = new Date().toLocaleDateString();
+  for (const [applicationId, followUp] of Object.entries(followUps)) {
+    if (followUp.followUpDate === today) {
+      await bot.telegram.sendMessage(followUp.telegramId, `⏰ Follow-up reminder: It's time to follow up with ${followUp.company}!`);
+      delete followUps[applicationId]; // Remove after sending
+    }
   }
 };
 
