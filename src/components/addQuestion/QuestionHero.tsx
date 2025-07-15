@@ -1,26 +1,12 @@
 "use client";
 
 import type React from "react";
-import { useState, useEffect } from "react";
-import axios from "axios";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Toaster, toast } from "sonner";
-import {
-  Calendar,
-  Building2,
-  MessageSquare,
-  Plus,
-  Globe,
-  Lock,
-  Search,
-  X,
-} from "lucide-react";
+import { Plus, HelpCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -47,10 +33,19 @@ interface QuestionFormData {
 // Header Component
 export const HeaderComponent = () => {
   return (
-    <header className="mb-2 p-3 bg-gradient-to-r from-indigo-600 to-blue-700 text-white rounded-lg shadow">
-      <h1 className="text-3xl font-bold">Interview Questions</h1>
-      <p className="text-base">Manage and track your interview questions</p>
-    </header>
+    <div className="mb-6">
+      <div className="flex items-center gap-3 mb-2">
+        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center">
+          <HelpCircle className="w-5 h-5 text-primary" />
+        </div>
+        <h1 className="text-3xl font-bold text-gray-900">
+          Interview Questions
+        </h1>
+      </div>
+      <p className="text-gray-600">
+        Build and manage your interview question bank
+      </p>
+    </div>
   );
 };
 
@@ -75,32 +70,22 @@ export const QuestionModal = ({
 }) => {
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-white rounded-lg shadow-md p-3 max-w-sm animate-slide-up">
+      <DialogContent className="max-w-md">
         <DialogHeader>
-          <div className="flex justify-between items-center">
-            <DialogTitle className="text-lg font-bold text-gray-900">
-              Add New Question
-            </DialogTitle>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => onOpenChange(false)}
-              className="h-6 w-6 text-gray-500 hover:text-gray-700"
-            >
-              <X className="h-5 w-5" />
-            </Button>
-          </div>
+          <DialogTitle className="flex items-center gap-2">
+            <div className="w-6 h-6 rounded bg-primary/10 flex items-center justify-center">
+              <Plus className="h-4 w-4 text-primary" />
+            </div>
+            Add New Question
+          </DialogTitle>
         </DialogHeader>
-        <form
-          onSubmit={handleSubmit}
-          className="space-y-3"
-          aria-label="Add new question form"
-        >
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-4">
             <div>
               <Label
                 htmlFor="company"
-                className="text-xs font-semibold text-gray-700"
+                className="text-sm font-medium text-gray-700"
               >
                 Company <span className="text-red-500">*</span>
               </Label>
@@ -109,61 +94,75 @@ export const QuestionModal = ({
                 type="text"
                 value={formData.company}
                 onChange={(e) => handleInputChange("company", e.target.value)}
-                placeholder="e.g., Google"
-                className="mt-1 border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 h-8 text-sm"
+                placeholder="e.g., Google, Microsoft, Apple"
+                className="mt-1"
                 required
               />
             </div>
-            <div className="flex items-center justify-between">
+
+            <div>
               <Label
-                htmlFor="isPublic"
-                className="text-xs font-semibold text-gray-700"
+                htmlFor="question"
+                className="text-sm font-medium text-gray-700"
               >
-                Make Public
+                Question <span className="text-red-500">*</span>
               </Label>
+              <Textarea
+                id="question"
+                value={formData.question}
+                onChange={(e) => handleInputChange("question", e.target.value)}
+                placeholder="Enter the interview question..."
+                className="mt-1 min-h-[100px] resize-none"
+                required
+              />
+            </div>
+
+            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div>
+                <Label
+                  htmlFor="isPublic"
+                  className="text-sm font-medium text-gray-700"
+                >
+                  Make Public
+                </Label>
+                <p className="text-xs text-gray-500 mt-1">
+                  Allow others to see this question
+                </p>
+              </div>
               <Switch
                 id="isPublic"
                 checked={formData.isPublic}
                 onCheckedChange={(checked) =>
                   handleInputChange("isPublic", checked)
                 }
-                className="ml-1"
               />
             </div>
           </div>
 
-          <div>
-            <Label
-              htmlFor="question"
-              className="text-xs font-semibold text-gray-700"
-            >
-              Question <span className="text-red-500">*</span>
-            </Label>
-            <Textarea
-              id="question"
-              value={formData.question}
-              onChange={(e) => handleInputChange("question", e.target.value)}
-              placeholder="Enter the question..."
-              className="mt-1 border-gray-300 focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500 min-h-[80px] text-sm"
-              required
-            />
-          </div>
-
-          <DialogFooter className="flex gap-2">
-            <Button
-              type="submit"
-              disabled={submitting}
-              className=" cursor-pointer transition-all duration-200 text-sm"
-            >
-              {submitting ? "Adding..." : "Add Question"}
-            </Button>
+          <DialogFooter className="flex gap-2 pt-4">
             <Button
               type="button"
               variant="outline"
               onClick={() => onOpenChange(false)}
-              className="border-gray-300 hover:bg-gray-50 px-3 py-1 rounded text-sm"
             >
               Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={submitting}
+              className="flex items-center gap-2"
+            >
+              {submitting ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                  Adding...
+                </>
+              ) : (
+                <>
+                  <Plus className="h-4 w-4" />
+                  Add Question
+                </>
+              )}
             </Button>
           </DialogFooter>
         </form>

@@ -11,6 +11,7 @@ import {
   UserRoundPlus,
   ChevronsUpDown,
   Plus,
+  Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import logo from "../../public/programmer.png";
@@ -43,14 +44,15 @@ const mainSidebarItems = [
   { icon: CgHome, label: "Dashboard", href: "/" },
   { icon: UserRoundPlus, label: "Add Application", href: "/add-application" },
   { icon: FileText, label: "Application Status", href: "/application-status" },
+  // { icon: MessageCircle, label: "Chats", href: "/chat" },
+  { icon: Calendar, label: "Add Questions", href: "/add-questions" },
+  { icon: GrDocumentStore, label: "Question Bank", href: "/question-bank" },
   {
     icon: SiGnuprivacyguard,
     label: "Personal Assets",
     href: "/personal-assest",
+    disabled: true,
   },
-  // { icon: MessageCircle, label: "Chats", href: "/chat" },
-  { icon: Calendar, label: "Add Questions", href: "/add-questions" },
-  { icon: GrDocumentStore, label: "Question Bank", href: "/question-bank" },
 ];
 
 const bottomSidebarItems = [
@@ -87,22 +89,37 @@ export function AppSidebar() {
             <SidebarMenu className="space-y-1">
               {mainSidebarItems.map((item) => {
                 const isActive = pathname === item.href;
+                const isDisabled = item.disabled;
+
                 return (
                   <SidebarMenuItem key={item.label}>
                     <SidebarMenuButton
-                      asChild
-                      isActive={isActive}
+                      asChild={!isDisabled}
+                      isActive={isActive && !isDisabled}
+                      disabled={isDisabled}
                       className={cn(
                         "h-11 rounded-full px-4 text-sm font-medium transition-all",
-                        isActive
+                        isDisabled
+                          ? "text-gray-500 cursor-not-allowed hover:bg-transparent"
+                          : isActive
                           ? "bg-primary text-primary-foreground shadow-sm"
                           : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
-                      <Link href={item.href}>
-                        <item.icon className="h-4 w-4" />
-                        <span>{item.label}</span>
-                      </Link>
+                      {isDisabled ? (
+                        <div className="flex items-center justify-between w-full">
+                          <div className="flex items-center gap-2">
+                            <item.icon className="h-4 w-4" />
+                            <span>{item.label}</span>
+                          </div>
+                          <Lock className="h-4 w-4" />
+                        </div>
+                      ) : (
+                        <Link href={item.href}>
+                          <item.icon className="h-4 w-4" />
+                          <span>{item.label}</span>
+                        </Link>
+                      )}
                     </SidebarMenuButton>
                   </SidebarMenuItem>
                 );
@@ -142,16 +159,6 @@ export function AppSidebar() {
       </SidebarContent>
 
       <SidebarFooter className="p-4">
-        {/* <div className="flex justify-center mb-4">
-          <Button
-            variant="ghost"
-            size="icon"
-            className="h-10 w-10 rounded-full border border-border hover:bg-accent"
-          >
-            <Plus className="h-4 w-4" />
-          </Button>
-        </div> */}
-
         {isLoading ? (
           <div className="flex items-center gap-2 p-2">
             <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
