@@ -3,19 +3,15 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
-  LayoutDashboard,
-  Users,
   FileText,
-  Gift,
   MessageCircle,
   Calendar,
-  CreditCard,
   Settings,
   LogOut,
   UserRoundPlus,
-  LucideChevronsUpDown,
+  ChevronsUpDown,
+  Plus,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import logo from "../../public/programmer.png";
 import Image from "next/image";
@@ -24,6 +20,25 @@ import { GrDocumentStore } from "react-icons/gr";
 import { signOut, signIn, useSession } from "next-auth/react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { CgHome } from "react-icons/cg";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+} from "@/components/ui/sidebar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
 const mainSidebarItems = [
   { icon: CgHome, label: "Dashboard", href: "/" },
   { icon: UserRoundPlus, label: "Add Application", href: "/add-application" },
@@ -40,147 +55,153 @@ const mainSidebarItems = [
 
 const bottomSidebarItems = [
   { icon: Settings, label: "Settings", href: "/settings" },
-  // Logout will be handled explicitly
-  // { icon: LogOut, label: "Logout", href: null },
 ];
 
-interface SidebarProps {
-  isOpen: boolean;
-  onClose: () => void;
-}
-
-export function Sidebar({ isOpen, onClose }: SidebarProps) {
+export function AppSidebar() {
   const pathname = usePathname();
   const { data: session, status } = useSession();
-
   const isLoading = status === "loading";
 
   return (
-    <>
-      {/* Mobile overlay */}
-      {isOpen && (
-        <div
-          className="fixed inset-0 z-40 bg-black/50 lg:hidden"
-          onClick={onClose}
-        />
-      )}
-
-      {/* Sidebar */}
-      <div
-        className={cn(
-          "fixed inset-y-0 left-0 z-50 w-64 bg-background transform transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:inset-0",
-          isOpen ? "translate-x-0" : "-translate-x-full"
-        )}
-      >
-        <div className="flex items-center justify-center h-16">
-          <Link href="/" className="flex items-center">
+    <Sidebar className="border-r-0">
+      <SidebarHeader className="border-b-0 p-6">
+        <Link href="/" className="flex items-center gap-3">
+          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary">
             <Image
-              src={logo}
-              alt="GuildUp Logo"
-              width={40}
-              height={60}
-              className="rounded-md"
+              src={logo || "/placeholder.svg"}
+              alt="Let's Connect Logo"
+              width={20}
+              height={20}
+              className="rounded-sm"
             />
-            <span className="text-lg font-bold text-gray-900 mx-3">
-              Let&apos;s Connect
-            </span>
-          </Link>
-        </div>
+          </div>
+          <span className="text-lg font-semibold text-foreground">
+            Let's Connect
+          </span>
+        </Link>
+      </SidebarHeader>
 
-        {/* Navigation */}
-        <div className="flex flex-col h-full">
-          {/* Main Navigation */}
-          <nav className="mt-4 px-4 flex-1">
-            <ul className="space-y-2">
+      <SidebarContent className="px-4">
+        <SidebarGroup>
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
               {mainSidebarItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <li key={item.label}>
-                    <Button
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
                       asChild
-                      variant={isActive ? "secondary" : "ghost"}
+                      isActive={isActive}
                       className={cn(
-                        "w-full justify-start text-muted hover:bg-primary/80 hover:text-primary-foreground",
-                        isActive && "bg-primary/80 text-primary-foreground"
+                        "h-11 rounded-full px-4 text-sm font-medium transition-all",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
                       <Link href={item.href}>
-                        <item.icon className="w-6 h-6 mr-2" />
-                        {item.label}
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
                       </Link>
-                    </Button>
-                  </li>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 );
               })}
-            </ul>
-          </nav>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
 
-          {/* Bottom Navigation */}
-          <nav className="px-4 pb-20">
-            <ul className="space-y-2">
-              {/* User Info */}
-
+        <SidebarGroup className="mt-8">
+          <SidebarGroupContent>
+            <SidebarMenu className="space-y-1">
               {bottomSidebarItems.map((item) => {
                 const isActive = pathname === item.href;
                 return (
-                  <li key={item.label}>
-                    <Button
+                  <SidebarMenuItem key={item.label}>
+                    <SidebarMenuButton
                       asChild
-                      variant={isActive ? "secondary" : "ghost"}
+                      isActive={isActive}
                       className={cn(
-                        "w-full justify-start text-muted hover:bg-primary/80 hover:text-primary-foreground",
-                        isActive && "bg-primary/80 text-primary-foreground"
+                        "h-11 rounded-full px-4 text-sm font-medium transition-all",
+                        isActive
+                          ? "bg-primary text-primary-foreground shadow-sm"
+                          : "text-muted-foreground hover:bg-accent hover:text-accent-foreground"
                       )}
                     >
-                      <Link href={item.href!}>
-                        <item.icon className="w-6 h-6 mr-2" />
-                        {item.label}
+                      <Link href={item.href}>
+                        <item.icon className="h-4 w-4" />
+                        <span>{item.label}</span>
                       </Link>
-                    </Button>
-                  </li>
+                    </SidebarMenuButton>
+                  </SidebarMenuItem>
                 );
               })}
-              <div className=" mt-4">
-                {isLoading ? (
-                  <p>Loading user...</p>
-                ) : session?.user ? (
-                  <div className="flex items-center text-white space-x-2 p-2 rounded">
-                    <Avatar className="h-8 w-8 rounded-sm">
-                      <AvatarImage
-                        src={session.user.image || ""}
-                        alt={session.user.name || ""}
-                        className="rounded-none"
-                      />
-                      <AvatarFallback>
-                        {session.user.name?.[0] || "U"}
-                      </AvatarFallback>
-                    </Avatar>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+      </SidebarContent>
 
-                    <div className="flex justify-center items-center ">
-                      <div>
-                        {" "}
-                        <p className="text-sm font-medium">
-                          {session.user.name}
-                        </p>
-                        <p className="text-xs">{session.user.email}</p>
-                      </div>
-                      <LucideChevronsUpDown className="ml-2 h-4 w-4 cursor-pointer" />
-                    </div>
+      <SidebarFooter className="p-4">
+        {/* <div className="flex justify-center mb-4">
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-10 w-10 rounded-full border border-border hover:bg-accent"
+          >
+            <Plus className="h-4 w-4" />
+          </Button>
+        </div> */}
+
+        {isLoading ? (
+          <div className="flex items-center gap-2 p-2">
+            <div className="h-8 w-8 rounded-full bg-muted animate-pulse" />
+            <div className="flex-1">
+              <div className="h-3 bg-muted rounded animate-pulse mb-1" />
+              <div className="h-2 bg-muted rounded animate-pulse w-2/3" />
+            </div>
+          </div>
+        ) : session?.user ? (
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button
+                variant="ghost"
+                className="w-full justify-start h-auto p-2 hover:bg-accent"
+              >
+                <div className="flex items-center gap-2 w-full">
+                  <Avatar className="h-8 w-8">
+                    <AvatarImage
+                      src={session.user.image || ""}
+                      alt={session.user.name || ""}
+                    />
+                    <AvatarFallback className="text-xs">
+                      {session.user.name?.[0] || "U"}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="flex-1 text-left">
+                    <p className="text-sm font-medium leading-none">
+                      {session.user.name}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-1">
+                      {session.user.email}
+                    </p>
                   </div>
-                ) : (
-                  <Button
-                    className="w-full mt-2"
-                    onClick={() => signIn()}
-                    variant="secondary"
-                  >
-                    Login
-                  </Button>
-                )}
-              </div>
-            </ul>
-          </nav>
-        </div>
-      </div>
-    </>
+                  <ChevronsUpDown className="h-4 w-4 text-muted-foreground" />
+                </div>
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuItem onClick={() => signOut()}>
+                <LogOut className="h-4 w-4 mr-2" />
+                Sign out
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
+        ) : (
+          <Button onClick={() => signIn()} variant="outline" className="w-full">
+            Sign In
+          </Button>
+        )}
+      </SidebarFooter>
+    </Sidebar>
   );
 }
