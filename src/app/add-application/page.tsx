@@ -3,7 +3,7 @@ import React from "react";
 
 export default function page() {
   return (
-    <div className="mx-10 my-5">
+    <div className="py-6">
       <AddApplication />
     </div>
   );

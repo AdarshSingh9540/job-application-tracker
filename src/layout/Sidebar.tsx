@@ -48,7 +48,7 @@ const mainSidebarItems = [
     label: "Personal Assets",
     href: "/personal-assest",
   },
-  { icon: MessageCircle, label: "Chats", href: "/chat" },
+  // { icon: MessageCircle, label: "Chats", href: "/chat" },
   { icon: Calendar, label: "Add Questions", href: "/add-questions" },
   { icon: GrDocumentStore, label: "Question Bank", href: "/question-bank" },
 ];
@@ -111,7 +111,7 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
 
-        <SidebarGroup className="mt-8">
+        {/* <SidebarGroup className="mt-8">
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
               {bottomSidebarItems.map((item) => {
@@ -138,7 +138,7 @@ export function AppSidebar() {
               })}
             </SidebarMenu>
           </SidebarGroupContent>
-        </SidebarGroup>
+        </SidebarGroup> */}
       </SidebarContent>
 
       <SidebarFooter className="p-4">
