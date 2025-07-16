@@ -11,7 +11,7 @@ dotenv.config();
 
 const app = express();
 app.use(cors({
-  origin: ["http://localhost:3000"],
+  origin: ["http://localhost:3000","http://job-application-tracker-hd7g1232h.vercel.app/"],
   methods: ["POST", "GET","PUT","DELETE"],
   credentials: true
 }));
