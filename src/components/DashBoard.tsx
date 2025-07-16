@@ -5,6 +5,7 @@ import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Progress } from "@/components/ui/progress";
 import {
   Search,
   Mic,
@@ -15,11 +16,12 @@ import {
   Briefcase,
   CheckCircle,
   FileQuestionIcon as QuestionIcon,
-  Globe,
   Building2,
   RefreshCw,
   BarChart3,
   ArrowUpRight,
+  TrendingUp,
+  Clock,
 } from "lucide-react";
 import {
   ChartContainer,
@@ -36,12 +38,17 @@ import Link from "next/link";
 interface JobApplication {
   id: string;
   status: string;
+  company: string;
+  role: string;
+  applicationDate: string;
 }
 
 interface Question {
   _id: string;
   company: string;
+  question: string;
   isPublic: boolean;
+  createdAt: string;
 }
 
 const applicationStatusConfig = {
@@ -72,6 +79,9 @@ export default function Dashboard() {
       const mappedApplications = appResponse.data.data.map((app: any) => ({
         id: app._id,
         status: app.status.toLowerCase().replace(/\s+/g, "-"),
+        company: app.company,
+        role: app.role,
+        applicationDate: app.applicationDate,
       }));
       setApplications(mappedApplications);
 
@@ -82,7 +92,9 @@ export default function Dashboard() {
       const mappedQuestions = questionResponse.data.data.map((q: any) => ({
         _id: q._id,
         company: q.company,
+        question: q.question,
         isPublic: q.isPublic,
+        createdAt: q.createdAt,
       }));
       setQuestions(mappedQuestions);
     } catch (err) {
@@ -118,50 +130,95 @@ export default function Dashboard() {
     }))
     .filter((item) => item.value > 0);
 
+  const recentApplications = applications
+    .sort(
+      (a, b) =>
+        new Date(b.applicationDate).getTime() -
+        new Date(a.applicationDate).getTime()
+    )
+    .slice(0, 3);
+
+  // --- Follow-up Reminder Logic ---
+  const followUpApplications = applications
+    .filter((app) => {
+      const appDate = new Date(app.applicationDate);
+      const today = new Date();
+      const diffTime = Math.abs(today.getTime() - appDate.getTime());
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+      return (
+        diffDays > 2 && app.status !== "selected" && app.status !== "rejected"
+      );
+    })
+    .slice(0, 3); // Limit to 3 for display
+
   // --- Question Bank Stats ---
   const totalQuestions = questions.length;
-  const publicQuestions = questions.filter((q) => q.isPublic).length;
   const uniqueCompanies = Array.from(
     new Set(questions.map((q) => q.company))
   ).length;
 
+  const recentQuestions = questions
+    .sort(
+      (a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    )
+    .slice(0, 3);
+
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString("en-US", {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    });
+  };
+
+  const getDaysAgo = (dateString: string) => {
+    const appDate = new Date(dateString);
+    const today = new Date();
+    const diffTime = Math.abs(today.getTime() - appDate.getTime());
+    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    return diffDays === 0
+      ? "today"
+      : `${diffDays} day${diffDays === 1 ? "" : "s"} ago`;
+  };
+
   const LoadingSkeleton = () => (
     <div className="space-y-6">
       <div className="flex items-center justify-between mb-6">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-10 w-32" />
+        <Skeleton className="h-8 w-40" />
+        <Skeleton className="h-8 w-24" />
       </div>
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2 space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {[...Array(2)].map((_, i) => (
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        <div className="lg:col-span-2 space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[...Array(3)].map((_, i) => (
               <Card key={i} className="shadow-sm">
-                <CardContent className="p-4">
-                  <Skeleton className="h-24 w-full" />
+                <CardContent className="p-3">
+                  <Skeleton className="h-20 w-full" />
                 </CardContent>
               </Card>
             ))}
           </div>
           <Card className="shadow-sm">
-            <CardContent className="p-4">
-              <Skeleton className="h-64 w-full" />
+            <CardContent className="p-3">
+              <Skeleton className="h-56 w-full" />
             </CardContent>
           </Card>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             {[...Array(2)].map((_, i) => (
               <Card key={i} className="shadow-sm">
-                <CardContent className="p-4">
-                  <Skeleton className="h-32 w-full" />
+                <CardContent className="p-3">
+                  <Skeleton className="h-24 w-full" />
                 </CardContent>
               </Card>
             ))}
           </div>
         </div>
-        <div className="lg:col-span-1 space-y-6">
-          {[...Array(3)].map((_, i) => (
+        <div className="lg:col-span-1 space-y-4">
+          {[...Array(2)].map((_, i) => (
             <Card key={i} className="shadow-sm">
-              <CardContent className="p-4">
-                <Skeleton className="h-32 w-full" />
+              <CardContent className="p-3">
+                <Skeleton className="h-24 w-full" />
               </CardContent>
             </Card>
           ))}
@@ -172,16 +229,16 @@ export default function Dashboard() {
 
   if (loading) {
     return (
-      <div className="flex flex-col flex-1 p-6 bg-gray-50">
-        <header className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-4 flex-1">
-            <Skeleton className="h-10 w-full max-w-md" />
+      <div className="flex flex-col flex-1 p-4 bg-gray-50">
+        <header className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-3 flex-1">
+            <Skeleton className="h-8 w-full max-w-sm" />
           </div>
-          <div className="flex items-center gap-4">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <Skeleton className="h-10 w-24 rounded-full" />
+          <div className="flex items-center gap-3">
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-8 rounded-full" />
+            <Skeleton className="h-8 w-20 rounded-full" />
           </div>
         </header>
         <LoadingSkeleton />
@@ -210,97 +267,136 @@ export default function Dashboard() {
 
   return (
     <div className="flex flex-col flex-1 p-4">
-      {/* Dashboard Content */}
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
+      <div className="flex items-center justify-between mb-4">
+        <h1 className="text-2xl font-bold text-gray-900">Dashboard</h1>
         <div className="flex gap-2">
-          <Button asChild>
+          <Button asChild size="sm">
             <Link href="/add-application" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3 w-3" />
               Add Application
             </Link>
           </Button>
-          <Button asChild variant="outline">
+          <Button asChild variant="outline" size="sm">
             <Link href="/add-questions" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
+              <Plus className="h-3 w-3" />
               Add Question
             </Link>
           </Button>
         </div>
       </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4 flex-1">
         {/* Left Column: Application Stats & Chart */}
-        <div className="lg:col-span-2 space-y-6">
-          {/* Application Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="shadow-sm ">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <Briefcase className="h-5 w-5 text-primary" />
+        <div className="lg:col-span-2 space-y-4">
+          {/* Top Row Cards: Total Applications, Success Rate, Waiting for Results */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {/* Total Applications Card */}
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                  <Briefcase className="h-4 w-4 text-primary" />
                   Total Applications
                 </CardTitle>
                 <Link
                   href="/application-status"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1"
                 >
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <ArrowUpRight className="h-3 w-3 text-gray-500" />
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent>
-                <p className="text-4xl font-bold text-gray-900">
+              <CardContent className="p-3 pt-0">
+                <p className="text-3xl font-bold text-gray-900">
                   {totalApplications}
                 </p>
-                <p className="text-sm text-gray-600">Applications tracked</p>
+                <p className="text-xs text-gray-600">Applications tracked</p>
               </CardContent>
             </Card>
 
+            {/* Success Rate Card */}
             <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold flex items-center gap-2">
-                  <CheckCircle className="h-5 w-5 text-green-600" />
-                  Success Rate
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                  Application Success
                 </CardTitle>
                 <Link
                   href="/application-status"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1"
                 >
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <ArrowUpRight className="h-3 w-3 text-gray-500" />
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent>
-                <p className="text-4xl font-bold text-gray-900">
-                  {successRate}%
+              <CardContent className="p-3 pt-0">
+                <div className="bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-3xl font-bold">{successRate}%</span>
+                    <span className="text-xs flex items-center gap-1">
+                      <TrendingUp className="h-3 w-3" />
+                      {selectedApplications} Selected
+                    </span>
+                  </div>
+                  <p className="text-xs">Overall Success Rate</p>
+                  <Progress
+                    value={successRate}
+                    className="h-1.5 bg-purple-400 [&>*]:bg-green-400"
+                  />
+                  <div className="flex justify-between text-xs">
+                    <span>Applied</span>
+                    <span>Selected</span>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Waiting for Results Card */}
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-sm font-semibold">
+                  Waiting for Results
+                </CardTitle>
+                <Link
+                  href="/application-status"
+                  className="flex items-center gap-1"
+                >
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <ArrowUpRight className="h-3 w-3 text-gray-500" />
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <p className="text-3xl font-bold text-gray-900">
+                  {waitingResultApplications}
                 </p>
-                <p className="text-sm text-gray-600">Applications selected</p>
+                <p className="text-xs text-gray-600">
+                  Applications awaiting feedback
+                </p>
               </CardContent>
             </Card>
           </div>
 
           {/* Application Status Distribution Chart */}
           <Card className="shadow-sm">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-semibold flex items-center gap-2">
-                <BarChart3 className="w-5 h-5" />
+            <CardHeader className="pb-3">
+              <CardTitle className="text-base font-semibold flex items-center gap-2">
+                <BarChart3 className="w-4 h-4" />
                 Application Status Distribution
               </CardTitle>
             </CardHeader>
-            <CardContent className="flex flex-col lg:flex-row gap-6">
+            <CardContent className="flex flex-col lg:flex-row gap-4 p-3">
               <div className="lg:w-2/3">
                 {applicationChartData.length > 0 ? (
-                  <ChartContainer config={{}} className="h-[240px]">
+                  <ChartContainer config={{}} className="h-[180px]">
                     <ResponsiveContainer width="100%" height="100%">
                       <PieChart>
                         <Pie
                           data={applicationChartData}
                           cx="50%"
                           cy="50%"
-                          innerRadius={50}
-                          outerRadius={90}
+                          innerRadius={40}
+                          outerRadius={70}
                           paddingAngle={2}
                           dataKey="value"
                         >
@@ -313,28 +409,28 @@ export default function Dashboard() {
                     </ResponsiveContainer>
                   </ChartContainer>
                 ) : (
-                  <div className="h-[240px] flex items-center justify-center text-gray-400">
+                  <div className="h-[180px] flex items-center justify-center text-gray-400">
                     <div className="text-center">
-                      <BarChart3 className="w-12 h-12 mx-auto mb-2 opacity-50" />
-                      <p>No application data to display</p>
+                      <BarChart3 className="w-10 h-10 mx-auto mb-1 opacity-50" />
+                      <p className="text-sm">No application data to display</p>
                     </div>
                   </div>
                 )}
               </div>
-              <div className="lg:w-1/3 space-y-3">
+              <div className="lg:w-1/3 space-y-2">
                 {applicationChartData.map((item, index) => (
                   <div
                     key={index}
-                    className="flex items-center justify-between p-2 rounded-lg bg-gray-50"
+                    className="flex items-center justify-between p-1.5 rounded-lg bg-gray-50"
                   >
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5">
                       <div
-                        className="w-3 h-3 rounded-full"
+                        className="w-2.5 h-2.5 rounded-full"
                         style={{ backgroundColor: item.color }}
                       ></div>
-                      <span className="text-sm font-medium">{item.name}</span>
+                      <span className="text-xs font-medium">{item.name}</span>
                     </div>
-                    <Badge variant="outline" className="bg-white">
+                    <Badge variant="outline" className="bg-white text-xs">
                       {item.value}
                     </Badge>
                   </div>
@@ -343,142 +439,356 @@ export default function Dashboard() {
             </CardContent>
           </Card>
 
-          {/* Quick Links / Other Sections */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold">
-                  Waiting for Results
+          {/* Recent Applications & Follow-up Reminders */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Recent Applications Card */}
+            {/* <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-sm font-semibold">
+                  Recent Applications
                 </CardTitle>
                 <Link
                   href="/application-status"
-                  className="flex items-center gap-2"
+                  className="flex items-center gap-1"
                 >
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                  <Button
+                    variant="link"
+                    className="text-xs text-gray-600 p-0 h-auto"
+                  >
+                    View all
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent>
-                <p className="text-4xl font-bold text-gray-900">
-                  {waitingResultApplications}
+              <CardContent className="p-3 pt-0 space-y-2">
+                {recentApplications.length > 0 ? (
+                  recentApplications.map((app) => (
+                    <div
+                      key={app.id}
+                      className="flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">
+                          {app.role}
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          {app.company} - {formatDate(app.applicationDate)}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`${
+                          applicationStatusConfig[
+                            app.status as keyof typeof applicationStatusConfig
+                          ]?.chartColor
+                            ? `bg-[${
+                                applicationStatusConfig[
+                                  app.status as keyof typeof applicationStatusConfig
+                                ]?.chartColor
+                              }/10] text-[${
+                                applicationStatusConfig[
+                                  app.status as keyof typeof applicationStatusConfig
+                                ]?.chartColor
+                              }] border-[${
+                                applicationStatusConfig[
+                                  app.status as keyof typeof applicationStatusConfig
+                                ]?.chartColor
+                              }/20]`
+                            : "bg-gray-100 text-gray-800 border-gray-200"
+                        } text-xs`}
+                      >
+                        {applicationStatusConfig[
+                          app.status as keyof typeof applicationStatusConfig
+                        ]?.title || app.status}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-2 text-gray-400">
+                    <Briefcase className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                    <p className="text-xs">No recent applications</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card> */}
+
+            {/* Follow-up Reminder Card */}
+            {/* <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                  <Clock className="h-4 w-4 text-orange-500" />
+                  Follow-up Reminders
+                </CardTitle>
+                <Link
+                  href="/application-status"
+                  className="flex items-center gap-1"
+                >
+                  <Button
+                    variant="link"
+                    className="text-xs text-gray-600 p-0 h-auto"
+                  >
+                    View all
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="p-3 pt-0 space-y-2">
+                {followUpApplications.length > 0 ? (
+                  followUpApplications.map((app) => (
+                    <div
+                      key={app.id}
+                      className="flex items-center justify-between text-xs"
+                    >
+                      <div>
+                        <p className="font-medium text-gray-900">
+                          {app.company}
+                        </p>
+                        <p className="text-gray-600">{app.role}</p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className="bg-orange-50 text-orange-700 border-orange-200"
+                      >
+                        {getDaysAgo(app.applicationDate)}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-2 text-gray-400">
+                    <Clock className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                    <p className="text-xs">No follow-ups needed</p>
+                  </div>
+                )}
+              </CardContent>
+            </Card> */}
+
+            {/* Companies Tracked Card */}
+            <Card className="shadow-sm">
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                  <Building2 className="h-4 w-4 text-purple-600" />
+                  Companies Tracked
+                </CardTitle>
+                <Link href="/question-bank" className="flex items-center gap-1">
+                  <Button variant="ghost" size="icon" className="h-7 w-7">
+                    <ArrowUpRight className="h-3 w-3 text-gray-500" />
+                  </Button>
+                </Link>
+              </CardHeader>
+              <CardContent className="p-3 pt-0">
+                <p className="text-3xl font-bold text-gray-900">
+                  {uniqueCompanies}
                 </p>
-                <p className="text-sm text-gray-600">
-                  Applications awaiting feedback
+                <p className="text-xs text-gray-600">
+                  Companies in question bank
                 </p>
               </CardContent>
             </Card>
+
             <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <CardTitle className="text-base font-semibold">
-                  View All Applications
+              <CardHeader className="flex flex-row items-center justify-between pb-1">
+                <CardTitle className="text-sm font-semibold">
+                  Recent Questions
                 </CardTitle>
-                <Link
-                  href="/application-status"
-                  className="flex items-center gap-2"
-                >
-                  <Button variant="ghost" size="icon" className="h-8 w-8">
-                    <ArrowUpRight className="h-4 w-4 text-gray-500" />
+                <Link href="/question-bank" className="flex items-center gap-1">
+                  <Button
+                    variant="link"
+                    className="text-xs text-gray-600 p-0 h-auto"
+                  >
+                    View all
                   </Button>
                 </Link>
               </CardHeader>
-              <CardContent className="h-[80px] flex items-center justify-center">
-                <Link href="/application-status">
-                  <Button variant="outline" className="w-full bg-transparent">
-                    Go to Applications
-                  </Button>
-                </Link>
+              <CardContent className="p-3 pt-0 space-y-2">
+                {recentQuestions.length > 0 ? (
+                  recentQuestions.map((q) => (
+                    <div
+                      key={q._id}
+                      className="flex items-center justify-between"
+                    >
+                      <div>
+                        <p className="font-medium text-sm text-gray-900">
+                          {q.company}
+                        </p>
+                        <p className="text-xs text-gray-600 truncate max-w-[140px]">
+                          {q.question}
+                        </p>
+                      </div>
+                      <Badge
+                        variant="outline"
+                        className={`${
+                          q.isPublic
+                            ? "bg-green-100 text-green-800 border-green-200"
+                            : "bg-yellow-100 text-yellow-800 border-yellow-200"
+                        } text-xs`}
+                      >
+                        {q.isPublic ? "Public" : "Premium"}
+                      </Badge>
+                    </div>
+                  ))
+                ) : (
+                  <div className="text-center py-2 text-gray-400">
+                    <QuestionIcon className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                    <p className="text-xs">No recent questions</p>
+                  </div>
+                )}
               </CardContent>
             </Card>
           </div>
         </div>
 
-        {/* Right Column: Question Bank Stats */}
-        <div className="lg:col-span-1 space-y-6">
-          {/* Question Bank Summary Cards */}
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <QuestionIcon className="h-5 w-5 text-primary" />
+        {/* Right Column: Question Bank Stats & Recent Questions */}
+        <div className="lg:col-span-1 space-y-4">
+          {/* Total Questions Card */}
+          {/* <Card className="shadow-sm">
+            <CardHeader className="flex flex-row items-center justify-between pb-1">
+              <CardTitle className="text-sm font-semibold flex items-center gap-1">
+                <QuestionIcon className="h-4 w-4 text-primary" />
                 Total Questions
               </CardTitle>
-              <Link href="/question-bank" className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <ArrowUpRight className="h-4 w-4 text-gray-500" />
+              <Link href="/question-bank" className="flex items-center gap-1">
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <ArrowUpRight className="h-3 w-3 text-gray-500" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-gray-900">
+            <CardContent className="p-3 pt-0">
+              <p className="text-3xl font-bold text-gray-900">
                 {totalQuestions}
               </p>
-              <p className="text-sm text-gray-600">Questions in your bank</p>
+              <p className="text-xs text-gray-600">Questions in your bank</p>
             </CardContent>
-          </Card>
+          </Card> */}
 
+          {/* Follow-up Reminder Card */}
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Globe className="h-5 w-5 text-green-600" />
-                Public Questions
+            <CardHeader className="flex flex-row items-center justify-between pb-1 border-b ">
+              <CardTitle className="text-md font-semibold flex items-center gap-1  ">
+                <Clock className="h-5 w-5 text-orange-500 mr-2" />
+                Follow-up Reminders
               </CardTitle>
-              <Link href="/question-bank" className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <ArrowUpRight className="h-4 w-4 text-gray-500" />
+              <Link
+                href="/application-status"
+                className="flex items-center gap-1"
+              >
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <ArrowUpRight className="h-5 w-5 text-gray-500" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-gray-900">
-                {publicQuestions}
-              </p>
-              <p className="text-sm text-gray-600">
-                Publicly available questions
-              </p>
+            <CardContent className="p-3 pt-0 space-y-3">
+              {followUpApplications.length > 0 ? (
+                followUpApplications.map((app) => (
+                  <div
+                    key={app.id}
+                    className="flex items-center justify-between text-sm"
+                  >
+                    <div>
+                      <p className="font-medium text-gray-900">{app.company}</p>
+                      <p className="text-gray-600">{app.role}</p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className="bg-orange-50 text-orange-700 border-orange-200"
+                    >
+                      {getDaysAgo(app.applicationDate)}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-2 text-gray-400">
+                  <Clock className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                  <p className="text-xs">No follow-ups needed</p>
+                </div>
+              )}
             </CardContent>
+            <div className="mx-2 px-2">
+              <Link
+                href="/application-status"
+                className="flex items-center gap-1"
+              >
+                <Button variant="default" className="w-full ">
+                  View all
+                </Button>
+              </Link>
+            </div>
           </Card>
 
           <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-semibold flex items-center gap-2">
-                <Building2 className="h-5 w-5 text-purple-600" />
-                Companies Tracked
+            <CardHeader className="flex flex-row items-center justify-between pb- border-b">
+              <CardTitle className="text-md font-semibold">
+                Recent Applications
               </CardTitle>
-              <Link href="/question-bank" className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <ArrowUpRight className="h-4 w-4 text-gray-500" />
+              <Link
+                href="/application-status"
+                className="flex items-center gap-1"
+              >
+                <Button variant="ghost" size="icon" className="h-7 w-7">
+                  <ArrowUpRight className="h-5 w-5 text-gray-500" />
                 </Button>
               </Link>
             </CardHeader>
-            <CardContent>
-              <p className="text-4xl font-bold text-gray-900">
-                {uniqueCompanies}
-              </p>
-              <p className="text-sm text-gray-600">
-                Companies in question bank
-              </p>
+            <CardContent className="p-3 pt-0 space-y-2">
+              {recentApplications.length > 0 ? (
+                recentApplications.map((app) => (
+                  <div
+                    key={app.id}
+                    className="flex items-center justify-between"
+                  >
+                    <div>
+                      <p className="font-medium text-sm text-gray-900">
+                        {app.role}
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        {app.company} - {formatDate(app.applicationDate)}
+                      </p>
+                    </div>
+                    <Badge
+                      variant="outline"
+                      className={`${
+                        applicationStatusConfig[
+                          app.status as keyof typeof applicationStatusConfig
+                        ]?.chartColor
+                          ? `bg-[${
+                              applicationStatusConfig[
+                                app.status as keyof typeof applicationStatusConfig
+                              ]?.chartColor
+                            }/10] text-[${
+                              applicationStatusConfig[
+                                app.status as keyof typeof applicationStatusConfig
+                              ]?.chartColor
+                            }] border-[${
+                              applicationStatusConfig[
+                                app.status as keyof typeof applicationStatusConfig
+                              ]?.chartColor
+                            }/20]`
+                          : "bg-gray-100 text-gray-800 border-gray-200"
+                      } text-xs`}
+                    >
+                      {applicationStatusConfig[
+                        app.status as keyof typeof applicationStatusConfig
+                      ]?.title || app.status}
+                    </Badge>
+                  </div>
+                ))
+              ) : (
+                <div className="text-center py-2 text-gray-400">
+                  <Briefcase className="w-6 h-6 mx-auto mb-1 opacity-50" />
+                  <p className="text-xs">No recent applications</p>
+                </div>
+              )}
             </CardContent>
+            <div className="mx-2 px-2">
+              <Link
+                href="/application-status"
+                className="flex items-center gap-1"
+              >
+                <Button variant="default" className="w-full">
+                  View all
+                </Button>
+              </Link>
+            </div>
           </Card>
 
-          <Card className="shadow-sm">
-            <CardHeader className="flex flex-row items-center justify-between pb-2">
-              <CardTitle className="text-base font-semibold">
-                View Question Bank
-              </CardTitle>
-              <Link href="/question-bank" className="flex items-center gap-2">
-                <Button variant="ghost" size="icon" className="h-8 w-8">
-                  <ArrowUpRight className="h-4 w-4 text-gray-500" />
-                </Button>
-              </Link>
-            </CardHeader>
-            <CardContent className="h-[80px] flex items-center justify-center">
-              <Link href="/question-bank">
-                <Button variant="outline" className="w-full bg-transparent">
-                  Go to Question Bank
-                </Button>
-              </Link>
-            </CardContent>
-          </Card>
+          {/* Recent Questions */}
         </div>
       </div>
     </div>
