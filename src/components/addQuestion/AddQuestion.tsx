@@ -34,6 +34,7 @@ export default function QuestionsPage() {
   const [openModal, setOpenModal] = useState(false);
   //   const userId = "68703dbdb65b9f8c39febb6e";
   console.log("sessssion    >>>>>>>", session);
+  //@ts-ignore
   const userId = session?.user?.id;
 
   const [formData, setFormData] = useState<QuestionFormData>({

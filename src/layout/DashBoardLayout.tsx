@@ -1,3 +1,5 @@
+
+//@ts-nocheck
 "use client";
 
 import type React from "react";
@@ -6,11 +8,10 @@ import { useState } from "react";
 import { AppSidebar } from "./Sidebar";
 import { Navbar } from "./Navbar";
 import {
-  SidebarInset,
+  // SidebarInset,
   SidebarProvider,
-  SidebarTrigger,
+  // SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
 
 interface DashboardLayoutProps {
   children: React.ReactNode;

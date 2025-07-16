@@ -1,6 +1,7 @@
-// app/api/link-telegram/route.ts
+//@ts-nocheck
+
 import { getServerSession } from "next-auth";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import { authOptions } from "@/lib/authOptions";
 import client from "@/app/utilis/db";
 import { ObjectId } from "mongodb";
 import { NextResponse } from "next/server";

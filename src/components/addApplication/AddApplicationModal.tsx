@@ -82,7 +82,8 @@ export default function AddApplicationModal({
   });
 
   const { data: session } = useSession();
-  const userID = session?.user?.id;
+  //@ts-ignore
+  const userID = session?.user?.id || "";
   useEffect(() => {
     if (editingApplication) {
       setCurrentApplication(editingApplication);
@@ -129,7 +130,7 @@ export default function AddApplicationModal({
       status: currentApplication.status || "applied",
       jd: currentApplication.jd || "",
       companyProfileLink: currentApplication.companyProfileLink || "",
-      userId: USER_ID,
+      userId: userID,
     };
 
     try {

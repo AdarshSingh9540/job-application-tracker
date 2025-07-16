@@ -4,13 +4,13 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import {
   FileText,
-  MessageCircle,
+
   Calendar,
   Settings,
   LogOut,
   UserRoundPlus,
   ChevronsUpDown,
-  Plus,
+
   Lock,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -55,9 +55,9 @@ const mainSidebarItems = [
   },
 ];
 
-const bottomSidebarItems = [
-  { icon: Settings, label: "Settings", href: "/settings" },
-];
+// const bottomSidebarItems = [
+//   { icon: Settings, label: "Settings", href: "/settings" },
+// ];
 
 export function AppSidebar() {
   const pathname = usePathname();

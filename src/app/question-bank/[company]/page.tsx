@@ -32,11 +32,21 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 
+type Question = {
+  _id: string;
+  question: string;
+  company: string;
+  isPublic: boolean;
+  createdAt: string;
+};
+
 const CompanyQuestions = () => {
-  const { company } = useParams();
+  const params = useParams<{ company: string }>();
+  const company = params.company;
   const router = useRouter();
-  const [questions, setQuestions] = useState([]);
-  const [filteredQuestions, setFilteredQuestions] = useState([]);
+  const [questions, setQuestions] = useState<Question[]>([]);
+  const [filteredQuestions, setFilteredQuestions] = useState<Question[]>([]);
+
   const [loading, setLoading] = useState(true);
   const [isPrimeMember, setIsPrimeMember] = useState(false);
   const [showUpgradeDialog, setShowUpgradeDialog] = useState(false);
@@ -53,7 +63,7 @@ const CompanyQuestions = () => {
         if (!response.ok) throw new Error("Failed to fetch data");
         const data = await response.json();
         const filteredQuestions = data.data.filter(
-          (q) => q.company === decodeURIComponent(company)
+          (q: any) => q.company === decodeURIComponent(company)
         );
         setQuestions(filteredQuestions);
         setFilteredQuestions(filteredQuestions);

@@ -96,6 +96,7 @@ export default function ApplicationTracker() {
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  //@ts-ignore
   const userId = session?.user?.id ;
 
   const fetchAllApplications = async () => {

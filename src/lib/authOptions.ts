@@ -7,7 +7,7 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import GoogleProvider from "next-auth/providers/google";
 import type { AuthOptions, SessionStrategy } from "next-auth";
 
-const authOptions: AuthOptions = {
+export const authOptions: AuthOptions = {
   adapter: MongoDBAdapter(client),
   providers: [
     CredentialsProvider({

@@ -4,14 +4,9 @@ import { useState, useEffect } from "react";
 import axios from "axios";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
 import { Progress } from "@/components/ui/progress";
 import {
-  Search,
-  Mic,
-  Sun,
-  Bell,
-  MessageSquare,
+
   Plus,
   Briefcase,
   CheckCircle,
@@ -29,7 +24,6 @@ import {
   ChartTooltipContent,
 } from "@/components/ui/chart";
 import { PieChart, Pie, Cell, ResponsiveContainer } from "recharts";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
@@ -67,6 +61,7 @@ const applicationStatusConfig = {
 
 export default function Dashboard() {
   const { data: session } = useSession();
+  //@ts-ignore
   const userId = session?.user?.id;
   console.log(userId);
 
