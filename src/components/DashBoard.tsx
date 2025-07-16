@@ -80,7 +80,7 @@ export default function Dashboard() {
     try {
       // Fetch Applications
       const appResponse = await axios.get(
-        `https://job-application-tracker-nq8y.onrender.com/api/v1/applications/fetch-application/${userId}`
+        `https://job-application-tracker-e17w.vercel.app/api/v1/applications/fetch-application/${userId}`
       );
       const mappedApplications = appResponse.data.data.map((app: any) => ({
         id: app._id,
