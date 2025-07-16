@@ -52,6 +52,7 @@ bot.start(async (ctx) => {
 });
 
 // CALLBACK QUERIES
+// CALLBACK QUERIES
 bot.on("callback_query", async (ctx) => {
   const telegramId = ctx.from.id.toString();
   const message = ctx.callbackQuery.data;
@@ -78,11 +79,33 @@ bot.on("callback_query", async (ctx) => {
       await ctx.reply("Please enter the application ID to delete.");
     } else if (message === "date") {
       state.step = "askDate";
-      await ctx.reply("Please enter the date (e.g., 7/15/2025) or select from options:", {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(today.getDate() - 1);
+      const twoDaysAgo = new Date(today);
+      twoDaysAgo.setDate(today.getDate() - 2);
+
+      // Format dates as MM/DD/YYYY
+      const formatDate = (date) => date.toLocaleDateString('en-US', {
+        month: 'numeric',
+        day: 'numeric',
+        year: 'numeric'
+      });
+
+      const todayStr = formatDate(today);
+      const yesterdayStr = formatDate(yesterday);
+      const twoDaysAgoStr = formatDate(twoDaysAgo);
+
+      await ctx.reply("Please enter the date (e.g., MM/DD/YYYY) or select from options:", {
         reply_markup: {
           inline_keyboard: [
-            [{ text: "Today (7/15/2025)", callback_data: "7/15/2025" }, { text: "Yesterday (7/14/2025)", callback_data: "7/14/2025" }],
-            [{ text: "Two Days Ago (7/13/2025)", callback_data: "7/13/2025" }],
+            [
+              { text: `Today (${todayStr})`, callback_data: todayStr },
+              { text: `Yesterday (${yesterdayStr})`, callback_data: yesterdayStr }
+            ],
+            [
+              { text: `Two Days Ago (${twoDaysAgoStr})`, callback_data: twoDaysAgoStr }
+            ],
           ],
         },
       });
@@ -144,10 +167,15 @@ bot.on("callback_query", async (ctx) => {
   } else if (message === "more_yes" || message === "more_no") {
     handleMoreOption(ctx, telegramId, message);
     ctx.answerCbQuery();
-  } else if (state.step === "askDate" && ["7/15/2025", "7/14/2025", "7/13/2025"].includes(message)) {
-    state.date = message;
-    await fetchApplicationsByDate(ctx, telegramId);
-    ctx.answerCbQuery();
+  } else if (state.step === "askDate") {
+    const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
+    if (datePattern.test(message)) {
+      state.date = message;
+      await fetchApplicationsByDate(ctx, telegramId);
+      ctx.answerCbQuery();
+    } else {
+      ctx.answerCbQuery("Invalid date format. Please use MM/DD/YYYY.");
+    }
   } else if (state.step === "showDetails" && message === "yes") {
     state.step = "displayDetails";
     await displayApplicationDetails(ctx, telegramId);
