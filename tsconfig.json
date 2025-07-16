@@ -22,6 +22,6 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "server/src/app.js", "server/routes/v1/add.application.js", "server/models/sessionModel.js", "server/models/company.model.js", "server/middlewares/authMiddleWare.js", "server/controllers/applicationController.js"],
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts", "server/src/index.js", "server/routes/v1/add.application.js", "server/models/sessionModel.js", "server/models/company.model.js", "server/middlewares/authMiddleWare.js", "server/controllers/applicationController.js"],
   "exclude": ["node_modules"]
 }

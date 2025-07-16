@@ -10,7 +10,11 @@ import bot from '../telegramBot.js'
 dotenv.config();
 
 const app = express();
-app.use(cors({ origin: "*" }));
+app.use(cors({
+  origin: [""],
+  methods: ["POST", "GET","PUT","DELETE"],
+  credentials: true
+}));
 app.use(express.json());
 
 mongoose
