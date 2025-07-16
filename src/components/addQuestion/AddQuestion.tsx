@@ -3,31 +3,7 @@
 import type React from "react";
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import { Toaster, toast } from "sonner";
-import {
-  Calendar,
-  Building2,
-  MessageSquare,
-  Plus,
-  Globe,
-  Lock,
-  Search,
-  X,
-} from "lucide-react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from "@/components/ui/dialog";
 import { HeaderComponent } from "./QuestionHero";
 import { QuestionListComponent } from "./QuestionList";
 import { QuestionModal } from "./QuestionHero";
@@ -70,7 +46,7 @@ export default function QuestionsPage() {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:8081/api/v1/question/fetch-questions/${userId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/question/fetch-questions/${userId}`
       );
       setQuestions(response.data.data);
       setError(null);
@@ -97,7 +73,7 @@ export default function QuestionsPage() {
         isPublic: formData.isPublic,
       };
       await axios.post(
-        "http://localhost:8081/api/v1/question/add-question",
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/question/add-question`,
         payload
       );
       toast.success("Question added successfully!");

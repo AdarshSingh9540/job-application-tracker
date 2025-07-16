@@ -89,7 +89,7 @@ export default function ApplicationList({
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:8081/api/v1/applications/fetch-application/68703dbdb65b9f8c39febb6e`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/applications/fetch-application/68703dbdb65b9f8c39febb6e`
       );
 
       const mappedApplications = response.data.data.map((app: any) => ({

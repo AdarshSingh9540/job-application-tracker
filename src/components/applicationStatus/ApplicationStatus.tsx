@@ -26,6 +26,7 @@ import {
   RefreshCw,
   BarChart3,
 } from "lucide-react";
+import { useSession } from "next-auth/react";
 
 interface JobApplication {
   id: string;
@@ -91,16 +92,17 @@ const statusConfig = {
 };
 
 export default function ApplicationTracker() {
+  const {data:session} = useSession();
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const userId = "68703dbdb65b9f8c39febb6e";
+  const userId = session?.user?.id ;
 
   const fetchAllApplications = async () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `http://localhost:8081/api/v1/applications/fetch-application/${userId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/applications/fetch-application/${userId}`
       );
       const mappedApplications = response.data.data.map((app: any) => ({
         id: app._id,
