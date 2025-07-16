@@ -67,7 +67,7 @@ const applicationStatusConfig = {
 
 export default function Dashboard() {
   const { data: session } = useSession();
-  const userId = session?.user?.id; 
+  const userId = session?.user?.id;
 
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -80,7 +80,7 @@ export default function Dashboard() {
     try {
       // Fetch Applications
       const appResponse = await axios.get(
-        `http://localhost:8081/api/v1/applications/fetch-application/${userId}`
+        `https://job-application-tracker-nq8y.onrender.com/api/v1/applications/fetch-application/${userId}`
       );
       const mappedApplications = appResponse.data.data.map((app: any) => ({
         id: app._id,
