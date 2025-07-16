@@ -37,6 +37,7 @@ import { LuAlarmClock } from "react-icons/lu";
 import { MdEditDocument } from "react-icons/md";
 import { FaRegClock } from "react-icons/fa";
 import { IoDocument } from "react-icons/io5";
+import { useSession } from "next-auth/react";
 
 // Define interfaces for data
 interface JobApplication {
@@ -65,7 +66,8 @@ const applicationStatusConfig = {
 };
 
 export default function Dashboard() {
-  const userId = "68703dbdb65b9f8c39febb6e"; // Consistent user ID from previous components
+  const { data: session } = useSession();
+  const userId = session?.user?.id; 
 
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [questions, setQuestions] = useState<Question[]>([]);
@@ -671,8 +673,10 @@ export default function Dashboard() {
                     className="flex items-center justify-between text-sm"
                   >
                     <div>
-                      <p className="font-medium text-gray-900">{app.company}</p>
-                      <p className="text-gray-600">{app.role}</p>
+                      <p className="font-medium text-md  text-gray-900">
+                        {app.company}
+                      </p>
+                      <p className="text-gray-600 text-xs">{app.role}</p>
                     </div>
                     <Badge
                       variant="outline"
@@ -724,7 +728,7 @@ export default function Dashboard() {
                     className="flex items-center justify-between"
                   >
                     <div>
-                      <p className="font-medium text-sm text-gray-900">
+                      <p className="font-medium text-md text-gray-900">
                         {app.role}
                       </p>
                       <p className="text-xs text-gray-600">
