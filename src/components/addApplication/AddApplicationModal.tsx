@@ -30,6 +30,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useSession } from "next-auth/react";
 
 interface JobApplication {
   id?: string;
@@ -61,8 +62,6 @@ interface AddApplicationModalProps {
   editingApplication?: JobApplication | null;
 }
 
-const USER_ID = "68703dbdb65b9f8c39febb6e"; // replace with dynamic
-
 export default function AddApplicationModal({
   isOpen,
   onClose,
@@ -79,9 +78,11 @@ export default function AddApplicationModal({
     jd: "",
     companyProfileLink: "",
     interviewQuestions: [],
-    userId: USER_ID,
+    userId: "",
   });
 
+  const { data: session } = useSession();
+  const userID = session?.user?.id;
   useEffect(() => {
     if (editingApplication) {
       setCurrentApplication(editingApplication);
@@ -105,7 +106,7 @@ export default function AddApplicationModal({
       jd: "",
       companyProfileLink: "",
       interviewQuestions: [],
-      userId: USER_ID,
+      userId: userID,
     });
   };
 

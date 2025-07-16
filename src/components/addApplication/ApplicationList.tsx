@@ -23,6 +23,7 @@ import {
 import { toast } from "sonner";
 import { useEffect, useState } from "react";
 import axios from "axios";
+import { useSession } from "next-auth/react";
 
 // Define interface for JobApplication
 interface JobApplication {
@@ -81,15 +82,16 @@ export default function ApplicationList({
   onDelete,
   userId,
 }: ApplicationListProps) {
-  const [applications, setApplications] = useState<JobApplication[]>([]);
+  const { data: session } = useSession();
+  const userID = session?.user?.id;
+
   const [loading, setLoading] = useState<boolean>(true);
-  const [error, setError] = useState<string | null>(null);
 
   const fetchAllApplications = async () => {
     try {
       setLoading(true);
       const response = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/applications/fetch-application/68703dbdb65b9f8c39febb6e`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/applications/fetch-application/${userID}`
       );
 
       const mappedApplications = response.data.data.map((app: any) => ({
