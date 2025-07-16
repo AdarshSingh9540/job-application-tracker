@@ -2,10 +2,10 @@
 import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
-import addApplicationRouter from "./routes/v1/add.application.js";
-import interviewQuestion from "./routes/v1/interview.question.js"
+import addApplicationRouter from "../routes/v1/add.application.js";
+import interviewQuestion from "../routes/v1/interview.question.js"
 import cors from "cors";
-import bot from './telegramBot.js'
+import bot from '../telegramBot.js'
 // import { Telegraf } from "telegraf";
 dotenv.config();
 
