@@ -33,6 +33,10 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import Link from "next/link";
+import { LuAlarmClock } from "react-icons/lu";
+import { MdEditDocument } from "react-icons/md";
+import { FaRegClock } from "react-icons/fa";
+import { IoDocument } from "react-icons/io5";
 
 // Define interfaces for data
 interface JobApplication {
@@ -288,93 +292,78 @@ export default function Dashboard() {
         {/* Left Column: Application Stats & Chart */}
         <div className="lg:col-span-2 space-y-4">
           {/* Top Row Cards: Total Applications, Success Rate, Waiting for Results */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-            {/* Total Applications Card */}
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-1">
-                <CardTitle className="text-sm font-semibold flex items-center gap-1">
-                  <Briefcase className="h-4 w-4 text-primary" />
+
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            {/* Total Applications */}
+            <div className="border border-gray-200 rounded-md shadow-sm p-2 flex flex-col gap-1">
+              <div className="flex justify-between items-center border-b pb-1">
+                <span className="text-md font-medium flex items-center gap-1">
+                  <IoDocument className="h-5 w-5 text-primary mx-1" />
                   Total Applications
-                </CardTitle>
-                <Link
-                  href="/application-status"
-                  className="flex items-center gap-1"
-                >
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <ArrowUpRight className="h-3 w-3 text-gray-500" />
-                  </Button>
+                </span>
+                <Link href="/application-status">
+                  <ArrowUpRight className="h-4 w-4 text-gray-500" />
                 </Link>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <p className="text-3xl font-bold text-gray-900">
-                  {totalApplications}
+              </div>
+              <div className="items-center text-center py-2">
+                <p className="text-3xl font-bold">{totalApplications}</p>
+                <p className="text-[13px] text-gray-800 py-2">
+                  Applications tracked
                 </p>
-                <p className="text-xs text-gray-600">Applications tracked</p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
 
-            {/* Success Rate Card */}
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-1">
-                <CardTitle className="text-sm font-semibold flex items-center gap-1">
-                  <CheckCircle className="h-4 w-4 text-green-600" />
+            {/* Application Success */}
+            <div className="border border-gray-200 rounded-md shadow-sm p-2 flex flex-col gap-1">
+              <div className="flex justify-between items-center border-b mb-1">
+                <span className="text-md font-medium flex items-center gap-1">
+                  <CheckCircle className="h-5 w-5 mx-1 text-green-600" />
                   Application Success
-                </CardTitle>
-                <Link
-                  href="/application-status"
-                  className="flex items-center gap-1"
-                >
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <ArrowUpRight className="h-3 w-3 text-gray-500" />
-                  </Button>
+                </span>
+                <Link href="/application-status">
+                  <ArrowUpRight className="h-4 w-4 text-gray-500" />
                 </Link>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <div className="bg-gradient-to-r from-purple-600 to-blue-500 text-white rounded-lg p-3 space-y-2">
-                  <div className="flex items-center justify-between">
-                    <span className="text-3xl font-bold">{successRate}%</span>
-                    <span className="text-xs flex items-center gap-1">
-                      <TrendingUp className="h-3 w-3" />
-                      {selectedApplications} Selected
-                    </span>
-                  </div>
-                  <p className="text-xs">Overall Success Rate</p>
-                  <Progress
-                    value={successRate}
-                    className="h-1.5 bg-purple-400 [&>*]:bg-green-400"
-                  />
-                  <div className="flex justify-between text-xs">
-                    <span>Applied</span>
-                    <span>Selected</span>
-                  </div>
+              </div>
+              <div className="bg-gradient-to-r from-indigo-700 to-blue-500 text-white rounded p-2">
+                <div className="flex justify-between items-center ">
+                  <span className="text-lg font-bold">{successRate}%</span>
+                  <span className="text-[10px] flex items-center gap-1">
+                    <TrendingUp className="h-3 w-3" />
+                    {selectedApplications} Selected
+                  </span>
                 </div>
-              </CardContent>
-            </Card>
+                <p className="text-[10px]">Overall Success Rate</p>
+                <Progress
+                  value={successRate}
+                  className="h-1 bg-purple-400 [&>*]:bg-green-400"
+                />
+                <div className="flex justify-between ">
+                  <span>Applied</span>
+                  <span>Selected</span>
+                </div>
+              </div>
+            </div>
 
-            {/* Waiting for Results Card */}
-            <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-1">
-                <CardTitle className="text-sm font-semibold">
+            {/* Waiting for Results */}
+            <div className="border border-gray-200 rounded-md shadow-sm p-2 flex flex-col gap-1">
+              <div className="flex justify-between items-center border-b mb-1">
+                <span className="text-md font-medium flex items-center gap-1">
+                  <FaRegClock className="h-5 w-5 text-primary mx-1" />
                   Waiting for Results
-                </CardTitle>
-                <Link
-                  href="/application-status"
-                  className="flex items-center gap-1"
-                >
-                  <Button variant="ghost" size="icon" className="h-7 w-7">
-                    <ArrowUpRight className="h-3 w-3 text-gray-500" />
-                  </Button>
+                </span>
+                <Link href="/application-status">
+                  <ArrowUpRight className="h-4 w-4 text-gray-500" />
                 </Link>
-              </CardHeader>
-              <CardContent className="p-3 pt-0">
-                <p className="text-3xl font-bold text-gray-900">
+              </div>
+              <div className="items-center text-center py-2">
+                <p className="text-3xl font-bold">
                   {waitingResultApplications}
                 </p>
-                <p className="text-xs text-gray-600">
+                <p className="text-[13px] lg:mt-2 text-gray-800">
                   Applications awaiting feedback
                 </p>
-              </CardContent>
-            </Card>
+              </div>
+            </div>
           </div>
 
           {/* Application Status Distribution Chart */}
@@ -662,7 +651,7 @@ export default function Dashboard() {
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb-1 border-b ">
               <CardTitle className="text-md font-semibold flex items-center gap-1  ">
-                <Clock className="h-5 w-5 text-orange-500 mr-2" />
+                <LuAlarmClock className="h-6 w-6 text-orange-500 mr-2" />
                 Follow-up Reminders
               </CardTitle>
               <Link
@@ -714,7 +703,8 @@ export default function Dashboard() {
 
           <Card className="shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between pb- border-b">
-              <CardTitle className="text-md font-semibold">
+              <CardTitle className="text-md font-semibold flex items-center gap-1  ">
+                <MdEditDocument className="h-5 w-5 text-pink-500 mr-2" />
                 Recent Applications
               </CardTitle>
               <Link
