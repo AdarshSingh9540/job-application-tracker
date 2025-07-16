@@ -551,7 +551,7 @@ export default function Dashboard() {
 
             {/* Companies Tracked Card */}
             <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-1">
+              <CardHeader className="flex flex-row items-center justify-between pb-1 border-b">
                 <CardTitle className="text-sm font-semibold flex items-center gap-1">
                   <Building2 className="h-4 w-4 text-purple-600" />
                   Companies Tracked
@@ -573,7 +573,7 @@ export default function Dashboard() {
             </Card>
 
             <Card className="shadow-sm">
-              <CardHeader className="flex flex-row items-center justify-between pb-1">
+              <CardHeader className="flex flex-row items-center justify-between pb-1 border-b">
                 <CardTitle className="text-sm font-semibold">
                   Recent Questions
                 </CardTitle>
