@@ -209,8 +209,7 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex flex-col flex-1 p-6 bg-gray-50">
-
+    <div className="flex flex-col flex-1 p-4">
       {/* Dashboard Content */}
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-3xl font-bold text-gray-900">Dashboard</h1>
@@ -235,7 +234,7 @@ export default function Dashboard() {
         <div className="lg:col-span-2 space-y-6">
           {/* Application Summary Cards */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <Card className="shadow-sm">
+            <Card className="shadow-sm ">
               <CardHeader className="flex flex-row items-center justify-between pb-2">
                 <CardTitle className="text-base font-semibold flex items-center gap-2">
                   <Briefcase className="h-5 w-5 text-primary" />

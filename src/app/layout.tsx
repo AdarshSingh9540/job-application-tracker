@@ -4,6 +4,7 @@ import "./globals.css";
 import { DashboardLayout } from "@/layout/DashBoardLayout";
 import SessionProvider from "@/components/SessionProvider";
 import { Toaster } from "sonner";
+import { TelegramBotIndicator } from "@/components/TelegramBot";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,6 +35,7 @@ export default function RootLayout({
           <DashboardLayout>
             {children}
             <Toaster richColors position="top-center" />
+            <TelegramBotIndicator />
           </DashboardLayout>
         </SessionProvider>
       </body>

@@ -180,7 +180,7 @@ export function AppSidebar() {
                       src={session.user.image || ""}
                       alt={session.user.name || ""}
                     />
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback className="text-xs bg-primary text-white">
                       {session.user.name?.[0] || "U"}
                     </AvatarFallback>
                   </Avatar>
