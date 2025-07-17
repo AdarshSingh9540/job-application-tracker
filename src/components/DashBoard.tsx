@@ -6,7 +6,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
 import {
-
   Plus,
   Briefcase,
   CheckCircle,
@@ -76,7 +75,8 @@ export default function Dashboard() {
     try {
       // Fetch Applications
       const appResponse = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/applications/fetch-application/${userId}`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/applications/fetch-application/${userId}`,
+        { withCredentials: true }
       );
       const mappedApplications = appResponse.data.data.map((app: any) => ({
         id: app._id,
@@ -89,7 +89,8 @@ export default function Dashboard() {
 
       // Fetch Questions
       const questionResponse = await axios.get(
-        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/question/fetch-all-questions-with-visibility`
+        `${process.env.NEXT_PUBLIC_BACKEND_BASE_URL}/api/v1/question/fetch-all-questions-with-visibility`,
+        { withCredentials: true }
       );
       const mappedQuestions = questionResponse.data.data.map((q: any) => ({
         _id: q._id,
