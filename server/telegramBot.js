@@ -1,26 +1,11 @@
 import { Telegraf } from "telegraf";
-import express from "express";
-import bodyParser from "body-parser";
-import mongoose from "mongoose";
-
-const app = express();
-app.use(bodyParser.json());
 
 const bot = new Telegraf(process.env.TELEGRAM_BOT_TOKEN || "8073142544:AAEkaZ3LMeHqOYv_De0uJ3T4Mg7NavXmlDI");
 
 let userStates = {}; // in-memory state
-let followUps = {}; // In-memory store for follow-up reminders (simplified)
+let followUps = {}; // In-memory store for follow-up reminders
 
-const PORT = process.env.PORT || 8080;
-const WEBHOOK_URL = "https://job-application-tracker-e17w.vercel.app";
-
-// set webhook
-bot.telegram.setWebhook("https://job-application-tracker-e17w.vercel.app").then(() => console.log("✅ Webhook set")).catch(console.error);
-
-// Check for follow-ups every hour
-setInterval(() => checkFollowUps(), 60 * 60 * 1000); 
-// setInterval(() => checkFollowUps(), 10000);
-// 🚀 START COMMAND
+// START COMMAND
 bot.start(async (ctx) => {
   const telegramId = ctx.from.id.toString();
 
@@ -30,7 +15,7 @@ bot.start(async (ctx) => {
   const user = await users.findOne({ telegramId });
 
   if (!user) {
-    ctx.reply(
+    await ctx.reply(
       `👋 Hi ${ctx.from.first_name || ""}! Please link your account first:\n\n` +
       `👉 [Click here to link](https://crossing-axis-athens-functional.trycloudflare.com/link-telegram?telegramId=${telegramId})`,
       { parse_mode: "Markdown" }
@@ -52,7 +37,48 @@ bot.start(async (ctx) => {
 });
 
 // CALLBACK QUERIES
+bot.on("callback_query", async (ctx) => {
+  const telegramId = ctx.from.id.toString();
+  const message = ctx.callbackQuery.data;
 
+  if (!userStates[telegramId]) {
+    await ctx.answerCbQuery("Please start with /start");
+    return;
+  }
+
+  const state = userStates[telegramId];
+
+  if (state.step === "greet") {
+    if (message === "yes") {
+      state.step = "company";
+      await ctx.reply("Please enter the company name.");
+    } else if (message === "status") {
+      state.step = "askCompanyName";
+      await ctx.reply("Please enter the company name to check the status.");
+    } else if (message === "update") {
+      state.step = "askApplicationId";
+      await ctx.reply("Please enter the application ID to update its status.");
+    } else if (message === "delete") {
+      state.step = "askDeleteApplicationId";
+      await ctx.reply("Please enter the application ID to delete.");
+    } else if (message === "date") {
+      state.step = "askDate";
+      await ctx.reply("Please enter the date (e.g., MM/DD/YYYY) or select from options:", {
+        reply_markup: {
+          inline_keyboard: [
+            [{ text: "Today", callback_data: new Date().toLocaleDateString() }],
+            [{ text: "Yesterday", callback_data: new Date(Date.now() - 86400000).toLocaleDateString() }],
+          ],
+        },
+      });
+    } else {
+      await ctx.reply("Thank you! Feel free to return anytime. 😊");
+      delete userStates[telegramId];
+    }
+    await ctx.answerCbQuery();
+  }
+  // Add other state transitions as needed
+});
 
 // TEXT INPUTS
 bot.on("text", async (ctx) => {
@@ -75,10 +101,7 @@ bot.on("text", async (ctx) => {
       },
     });
   } else if (state.step === "linkInput") {
-    state.link = message.includes("http")
-      ? { companyProfileLink: message }
-      : { jd: message };
-
+    state.link = message.includes("http") ? { companyProfileLink: message } : { jd: message };
     state.optionalQueue = ["location", "stipend", "companyProfileLink", "jd"];
     state.step = "askOptional";
     await askNextOptionalField(ctx, telegramId);
@@ -86,16 +109,12 @@ bot.on("text", async (ctx) => {
     const field = state.currentOptional;
     if (field === "stipend") {
       const stipend = parseFloat(message);
-      if (!isNaN(stipend)) {
-        state[field] = stipend;
-      } else {
+      if (!isNaN(stipend)) state[field] = stipend;
+      else {
         await ctx.reply("Please enter a valid number for stipend.");
         return;
       }
-    } else {
-      state[field] = message;
-    }
-
+    } else state[field] = message;
     await askNextOptionalField(ctx, telegramId);
   } else if (state.step === "askCompanyName") {
     state.companyName = message;
@@ -120,38 +139,30 @@ bot.on("text", async (ctx) => {
     if (datePattern.test(message)) {
       state.date = message;
       await fetchApplicationsByDate(ctx, telegramId);
-    } else {
-      await ctx.reply("Please enter a valid date in MM/DD/YYYY format (e.g., 7/15/2025).");
-    }
+    } else await ctx.reply("Please enter a valid date in MM/DD/YYYY format (e.g., 7/15/2025).");
   }
 });
 
 // ASK OPTIONAL FIELDS
 const askNextOptionalField = async (ctx, telegramId) => {
   const state = userStates[telegramId];
-
   if (!state.optionalQueue || state.optionalQueue.length === 0) {
     await saveApplication(telegramId, state);
     await ctx.reply("✅ Application saved! Thank you! 🎉");
     await askMoreOption(ctx, telegramId);
     return;
   }
-
   const nextField = state.optionalQueue.shift();
   state.currentOptional = nextField;
-
   const questionMap = {
     location: "Do you want to add a location?",
     stipend: "Do you want to add a stipend?",
     companyProfileLink: "Do you want to add a company profile link?",
     jd: "Do you want to add a job description?",
   };
-
   await ctx.reply(questionMap[nextField], {
     reply_markup: {
-      inline_keyboard: [
-        [{ text: "Yes", callback_data: "optional_yes" }, { text: "No", callback_data: "optional_no" }],
-      ],
+      inline_keyboard: [[{ text: "Yes", callback_data: "optional_yes" }, { text: "No", callback_data: "optional_no" }]],
     },
   });
 };
@@ -160,11 +171,8 @@ const askNextOptionalField = async (ctx, telegramId) => {
 const saveApplication = async (telegramId, data) => {
   const db = mongoose.connection.db;
   const users = db.collection("users");
-
   const user = await users.findOne({ telegramId });
-
   if (!user) throw new Error("User not linked yet!");
-
   const applicationData = {
     userId: user._id.toString(),
     company: data.company,
@@ -172,7 +180,6 @@ const saveApplication = async (telegramId, data) => {
     applicationDate: data.applicationDate,
     status: "applied",
   };
-
   if (data.link?.companyProfileLink) applicationData.companyProfileLink = data.link.companyProfileLink;
   if (data.link?.jd) applicationData.jd = data.link.jd;
   if (data.location) applicationData.location = data.location;
@@ -180,185 +187,21 @@ const saveApplication = async (telegramId, data) => {
   if (data.companyProfileLink) applicationData.companyProfileLink = data.companyProfileLink;
   if (data.jd) applicationData.jd = data.jd;
 
-  const response = await fetch("https://job-application-tracker-e17w.vercel.app/api/v1/applications/add-application", {
+  const response = await fetch(`${process.env.BACKEND_URL}/api/v1/applications/add-application`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(applicationData),
   });
-
   const result = await response.json();
-
   if (!response.ok) throw new Error(result.error || "Failed to save application");
-
   console.log("✅ Application saved:", result);
-
-  // Schedule follow-up (2 days from applicationDate)
   const followUpDate = new Date(data.applicationDate);
   followUpDate.setDate(followUpDate.getDate() + 2);
-  followUps[result.data._id] = {
-    telegramId,
-    company: data.company,
-    followUpDate: followUpDate.toLocaleDateString(),
-  };
+  followUps[result.data._id] = { telegramId, company: data.company, followUpDate: followUpDate.toLocaleDateString() };
 };
 
-// FETCH APPLICATION STATUS
-const fetchApplicationStatus = async (ctx, telegramId) => {
-  const state = userStates[telegramId];
-  const companyName = state.companyName;
-
-  try {
-    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/fetch-application-by-company/${encodeURIComponent(companyName)}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    console.log("Fetch response status:", response.status);
-
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || "Failed to fetch status");
-
-    if (result.data.length === 0) {
-      await ctx.reply(`No applications found for ${companyName}.`);
-    } else {
-      const statuses = result.data.map(app => `${app.company} - ID: ${app._id} - Status: ${app.status} (Applied on: ${app.applicationDate})`).join("\n");
-      await ctx.reply(`Application statuses for ${companyName}:\n${statuses}`);
-    }
-
-    await askMoreOption(ctx, telegramId);
-  } catch (err) {
-    console.error("Error fetching application status:", err);
-    await ctx.reply("Sorry, I couldn’t fetch the status. Please try again later.");
-    delete userStates[telegramId];
-  }
-};
-
-// UPDATE APPLICATION
-const updateApplication = async (ctx, telegramId) => {
-  const state = userStates[telegramId];
-  const applicationId = state.applicationId;
-  const status = state.status;
-
-  try {
-    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/update-application/${applicationId}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ status }),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || "Failed to update application");
-
-    await ctx.reply(`✅ Application ${applicationId} updated to status: ${status}`);
-    await askMoreOption(ctx, telegramId);
-  } catch (err) {
-    console.error("Error updating application:", err);
-    await ctx.reply("Sorry, I couldn’t update the application. Please try again later.");
-    delete userStates[telegramId];
-  }
-};
-
-// DELETE APPLICATION
-const deleteApplication = async (ctx, telegramId) => {
-  const state = userStates[telegramId];
-  const applicationId = state.applicationId;
-
-  try {
-    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/delete-application/${applicationId}`, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || "Failed to delete application");
-
-    await ctx.reply(`✅ Application ${applicationId} deleted successfully`);
-    await askMoreOption(ctx, telegramId);
-  } catch (err) {
-    console.error("Error deleting application:", err);
-    await ctx.reply("Sorry, I couldn’t delete the application. Please try again later.");
-    delete userStates[telegramId];
-  }
-};
-
-// FETCH APPLICATIONS BY DATE
-const fetchApplicationsByDate = async (ctx, telegramId) => {
-  const state = userStates[telegramId];
-  const date = state.date;
-
-  try {
-    const db = mongoose.connection.db;
-    const users = db.collection("users");
-    const user = await users.findOne({ telegramId });
-    if (!user) throw new Error("User not linked yet!");
-
-    const userId = user._id.toString();
-    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/fetch-application-by-date/${userId}/${encodeURIComponent(date)}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    console.log("Fetch response status:", response.status);
-
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || "Failed to fetch applications");
-
-    await ctx.reply(`${result.message} on ${date}. Do you want to see the applications?`, {
-      reply_markup: {
-        inline_keyboard: [
-          [{ text: "Yes", callback_data: "yes" }, { text: "No", callback_data: "no" }],
-        ],
-      },
-    });
-    state.step = "showDetails";
-  } catch (err) {
-    console.error("Error fetching applications by date:", err);
-    await ctx.reply("Sorry, I couldn’t fetch the applications. Please try again later.");
-    delete userStates[telegramId];
-  }
-};
-
-// DISPLAY APPLICATION DETAILS
-const displayApplicationDetails = async (ctx, telegramId) => {
-  const state = userStates[telegramId];
-  const date = state.date;
-
-  try {
-    const db = mongoose.connection.db;
-    const users = db.collection("users");
-    const user = await users.findOne({ telegramId });
-    if (!user) throw new Error("User not linked yet!");
-
-    const userId = user._id.toString();
-    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/fetch-application-by-date/${userId}/${encodeURIComponent(date)}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-
-    console.log("Fetch response status:", response.status);
-
-    const result = await response.json();
-
-    if (!response.ok) throw new Error(result.error || "Failed to fetch applications");
-
-    if (result.data.length === 0) {
-      await ctx.reply(`No applications found for ${date}.`);
-    } else {
-      const details = result.data.map(app => `${app.company} - ID: ${app._id} - Status: ${app.status}`).join("\n");
-      await ctx.reply(`Applications on ${date}:\n${details}`);
-    }
-
-    await askMoreOption(ctx, telegramId);
-  } catch (err) {
-    console.error("Error displaying application details:", err);
-    await ctx.reply("Sorry, I couldn’t display the applications. Please try again later.");
-    delete userStates[telegramId];
-  }
-};
+// FETCH APPLICATION STATUS, UPDATE APPLICATION, DELETE APPLICATION, etc.
+// (Keep your existing functions with `process.env.BACKEND_URL`)
 
 // CHECK FOLLOW-UPS
 const checkFollowUps = async () => {
@@ -366,7 +209,7 @@ const checkFollowUps = async () => {
   for (const [applicationId, followUp] of Object.entries(followUps)) {
     if (followUp.followUpDate === today) {
       await bot.telegram.sendMessage(followUp.telegramId, `⏰ Follow-up reminder: It's time to follow up with ${followUp.company}!`);
-      delete followUps[applicationId]; // Remove after sending
+      delete followUps[applicationId];
     }
   }
 };
@@ -375,9 +218,7 @@ const checkFollowUps = async () => {
 const askMoreOption = async (ctx, telegramId) => {
   await ctx.reply("Do you want to know more?", {
     reply_markup: {
-      inline_keyboard: [
-        [{ text: "Yes", callback_data: "more_yes" }, { text: "No", callback_data: "more_no" }],
-      ],
+      inline_keyboard: [[{ text: "Yes", callback_data: "more_yes" }, { text: "No", callback_data: "more_no" }]],
     },
   });
 };
@@ -401,16 +242,5 @@ const handleMoreOption = async (ctx, telegramId, choice) => {
   }
 };
 
-// WEBHOOK
-app.use(bot.webhookCallback('/webhook'));
-
-app.post("/webhook", (req, res) => {
-  console.log("Webhook received:", req.body);
-  res.status(200).send("Webhook received");
-});
-
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on port ${PORT}`);
-});
-
+// Export bot for use in app.js
 export default bot;
