@@ -88,6 +88,9 @@ export default function ApplicationList({
   const userID = session?.user?.id;
 
   const [loading, setLoading] = useState<boolean>(true);
+  const [error, setError] = useState<string | null>(null);
+  const [applications, setApplications] = useState<JobApplication[]>([]);
+  
 
   const fetchAllApplications = async () => {
     try {
