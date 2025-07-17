@@ -15,7 +15,7 @@ const PORT = process.env.PORT || 8080;
 const WEBHOOK_URL = "https://job-application-tracker-e17w.vercel.app/webhook";
 
 // set webhook
-bot.telegram.setWebhook(WEBHOOK_URL).then(() => console.log("✅ Webhook set")).catch(console.error);
+bot.telegram.setWebhook("https://job-application-tracker-e17w.vercel.app/webhook").then(() => console.log("✅ Webhook set")).catch(console.error);
 
 // Check for follow-ups every hour
 setInterval(() => checkFollowUps(), 60 * 60 * 1000); 
@@ -180,7 +180,7 @@ const saveApplication = async (telegramId, data) => {
   if (data.companyProfileLink) applicationData.companyProfileLink = data.companyProfileLink;
   if (data.jd) applicationData.jd = data.jd;
 
-  const response = await fetch("http://localhost:8081/api/v1/applications/add-application", {
+  const response = await fetch("https://job-application-tracker-e17w.vercel.app/api/v1/applications/add-application", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(applicationData),
@@ -208,7 +208,7 @@ const fetchApplicationStatus = async (ctx, telegramId) => {
   const companyName = state.companyName;
 
   try {
-    const response = await fetch(`http://localhost:8081/api/v1/applications/fetch-application-by-company/${encodeURIComponent(companyName)}`, {
+    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/fetch-application-by-company/${encodeURIComponent(companyName)}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -241,7 +241,7 @@ const updateApplication = async (ctx, telegramId) => {
   const status = state.status;
 
   try {
-    const response = await fetch(`http://localhost:8081/api/v1/applications/update-application/${applicationId}`, {
+    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/update-application/${applicationId}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ status }),
@@ -266,7 +266,7 @@ const deleteApplication = async (ctx, telegramId) => {
   const applicationId = state.applicationId;
 
   try {
-    const response = await fetch(`http://localhost:8081/api/v1/applications/delete-application/${applicationId}`, {
+    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/delete-application/${applicationId}`, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
     });
@@ -296,7 +296,7 @@ const fetchApplicationsByDate = async (ctx, telegramId) => {
     if (!user) throw new Error("User not linked yet!");
 
     const userId = user._id.toString();
-    const response = await fetch(`http://localhost:8081/api/v1/applications/fetch-application-by-date/${userId}/${encodeURIComponent(date)}`, {
+    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/fetch-application-by-date/${userId}/${encodeURIComponent(date)}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -334,7 +334,7 @@ const displayApplicationDetails = async (ctx, telegramId) => {
     if (!user) throw new Error("User not linked yet!");
 
     const userId = user._id.toString();
-    const response = await fetch(`http://localhost:8081/api/v1/applications/fetch-application-by-date/${userId}/${encodeURIComponent(date)}`, {
+    const response = await fetch(`https://job-application-tracker-e17w.vercel.app/api/v1/applications/fetch-application-by-date/${userId}/${encodeURIComponent(date)}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
