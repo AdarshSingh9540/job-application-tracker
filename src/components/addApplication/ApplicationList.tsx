@@ -234,7 +234,7 @@ export default function ApplicationList({
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Briefcase className="w-5 h-5" />
-          Your Applications ({applications.length})
+          Your Applications ({applications?.length})
         </CardTitle>
         <CardDescription>
           Track and manage all your job applications
@@ -256,33 +256,33 @@ export default function ApplicationList({
                       </div>
                       <div className="min-w-0 flex-1">
                         <h3 className="font-semibold text-base text-gray-900 mb-1">
-                          {app.role}
+                          {app?.role}
                         </h3>
                         <p className="text-gray-600 font-medium mb-1">
-                          {app.company}
+                          {app?.company}
                         </p>
 
                         <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
-                          {app.location && (
+                          {app?.location && (
                             <div className="flex items-center gap-1">
                               <MapPin className="w-4 h-4" />
-                              <span>{app.location}</span>
+                              <span>{app?.location}</span>
                             </div>
                           )}
 
                           {app.stipend > 0 && (
                             <div className="flex items-center gap-1 text-green-600 font-medium">
                               <DollarSign className="w-4 h-4" />
-                              <span>{app.stipend.toLocaleString()}</span>
+                              <span>{app?.stipend.toLocaleString()}</span>
                             </div>
                           )}
 
-                          {app.applicationDate && (
+                          {app?.applicationDate && (
                             <div className="flex items-center gap-1">
                               <Calendar className="w-4 h-4" />
                               <span>
                                 {new Date(
-                                  app.applicationDate
+                                  app?.applicationDate
                                 ).toLocaleDateString("en-US", {
                                   year: "numeric",
                                   month: "short",
@@ -293,9 +293,9 @@ export default function ApplicationList({
                           )}
                         </div>
 
-                        {app.companyProfileLink && (
+                        {app?.companyProfileLink && (
                           <a
-                            href={app.companyProfileLink}
+                            href={app?.companyProfileLink}
                             target="_blank"
                             rel="noopener noreferrer"
                             className="inline-flex items-center gap-1 text-sm text-blue-600 hover:text-blue-800 mt-2 transition-colors"
@@ -309,7 +309,7 @@ export default function ApplicationList({
                   </div>
 
                   <div className="flex items-center gap-2 ml-4">
-                    {getStatusBadge(app.status)}
+                    {getStatusBadge(app?.status)}
                   </div>
                 </div>
 

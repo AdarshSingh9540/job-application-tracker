@@ -1,4 +1,4 @@
-//@ts-nocheck
+
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
@@ -14,6 +14,13 @@ import {
   DialogTitle,
 } from "../ui/dialog";
 import { useSession } from "next-auth/react";
+
+// Extend the session user type to include 'id'
+declare module "next-auth" {
+  interface User {
+    id?: string;
+  }
+}
 
 interface JobApplication {
   id: string;
@@ -39,8 +46,6 @@ export default function AddApplication() {
   const [deleteConfirmOpen, setDeleteConfirmOpen] = useState(false);
   const [applicationToDelete, setApplicationToDelete] =
     useState<JobApplication | null>(null);
-
-  // Fetch applications
   useEffect(() => {
     const fetchApplications = async () => {
       try {
@@ -50,7 +55,7 @@ export default function AddApplication() {
         if (!res.ok) throw new Error("Failed to fetch applications");
         const data = await res.json();
         setApplications(data.data || []);
-      } catch (err) {
+      } catch (err: any) {
         toast.error("Failed to load applications", {
           description: err.message,
         });
