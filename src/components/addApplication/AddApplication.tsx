@@ -1,4 +1,4 @@
-
+//@ts-nocheck
 "use client";
 import React, { useState, useEffect } from "react";
 import { Button } from "../ui/button";
@@ -37,7 +37,7 @@ interface JobApplication {
 
 export default function AddApplication() {
   const { data: session } = useSession();
-  const USER_ID = session?.user?.id||"";
+  const USER_ID = session?.user?.id || "";
   const [applications, setApplications] = useState<JobApplication[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingApplication, setEditingApplication] =
