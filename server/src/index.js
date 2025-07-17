@@ -30,7 +30,7 @@ app.get("/", (req, res) => {
   res.json({ msg: "Hello" });
 });
 
-// Set webhook on startup with retry
+// Set webhook to root path with retry
 (async () => {
   const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://job-application-tracker-e17w.vercel.app";
   let attempts = 0;
@@ -49,13 +49,19 @@ app.get("/", (req, res) => {
   }
 })();
 
-// Webhook callback (defaults to /)
+// Webhook callback at root path
 app.use(bot.webhookCallback());
 
-// Webhook endpoint for logging
+// Enhanced webhook endpoint for logging and processing
 app.post("/", (req, res) => {
   console.log("Webhook received:", req.body);
-  res.status(200).send("Webhook received");
+  try {
+    bot.handleUpdate(req.body, res);
+    res.status(200).send("Webhook processed");
+  } catch (err) {
+    console.error("Error processing webhook:", err);
+    res.status(500).send("Error processing webhook");
+  }
 });
 
 // Export for Vercel
