@@ -12,7 +12,7 @@ let userStates = {}; // in-memory state
 let followUps = {}; // In-memory store for follow-up reminders (simplified)
 
 const PORT = process.env.PORT || 8080;
-const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://job-application-tracker-e17w.vercel.app/webhook";
+const WEBHOOK_URL = "https://job-application-tracker-e17w.vercel.app/webhook";
 
 // set webhook
 bot.telegram.setWebhook(WEBHOOK_URL).then(() => console.log("✅ Webhook set")).catch(console.error);
