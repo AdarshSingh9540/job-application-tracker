@@ -12,7 +12,7 @@ let userStates = {}; // in-memory state
 let followUps = {}; // In-memory store for follow-up reminders (simplified)
 
 const PORT = process.env.PORT || 8080;
-const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://d3bfa506dd88.ngrok-free.app";
+const WEBHOOK_URL = process.env.WEBHOOK_URL || "https://job-application-tracker-e17w.vercel.app/webhook";
 
 // set webhook
 bot.telegram.setWebhook(WEBHOOK_URL).then(() => console.log("✅ Webhook set")).catch(console.error);
@@ -52,139 +52,7 @@ bot.start(async (ctx) => {
 });
 
 // CALLBACK QUERIES
-// CALLBACK QUERIES
-bot.on("callback_query", async (ctx) => {
-  const telegramId = ctx.from.id.toString();
-  const message = ctx.callbackQuery.data;
 
-  if (!userStates[telegramId]) {
-    ctx.answerCbQuery("Please start with /start");
-    return;
-  }
-
-  const state = userStates[telegramId];
-
-  if (state.step === "greet") {
-    if (message === "yes") {
-      state.step = "company";
-      await ctx.reply("Please enter the company name.");
-    } else if (message === "status") {
-      state.step = "askCompanyName";
-      await ctx.reply("Please enter the company name to check the status.");
-    } else if (message === "update") {
-      state.step = "askApplicationId";
-      await ctx.reply("Please enter the application ID to update its status.");
-    } else if (message === "delete") {
-      state.step = "askDeleteApplicationId";
-      await ctx.reply("Please enter the application ID to delete.");
-    } else if (message === "date") {
-      state.step = "askDate";
-      const today = new Date();
-      const yesterday = new Date(today);
-      yesterday.setDate(today.getDate() - 1);
-      const twoDaysAgo = new Date(today);
-      twoDaysAgo.setDate(today.getDate() - 2);
-
-      // Format dates as MM/DD/YYYY
-      const formatDate = (date) => date.toLocaleDateString('en-US', {
-        month: 'numeric',
-        day: 'numeric',
-        year: 'numeric'
-      });
-
-      const todayStr = formatDate(today);
-      const yesterdayStr = formatDate(yesterday);
-      const twoDaysAgoStr = formatDate(twoDaysAgo);
-
-      await ctx.reply("Please enter the date (e.g., MM/DD/YYYY) or select from options:", {
-        reply_markup: {
-          inline_keyboard: [
-            [
-              { text: `Today (${todayStr})`, callback_data: todayStr },
-              { text: `Yesterday (${yesterdayStr})`, callback_data: yesterdayStr }
-            ],
-            [
-              { text: `Two Days Ago (${twoDaysAgoStr})`, callback_data: twoDaysAgoStr }
-            ],
-          ],
-        },
-      });
-    } else {
-      await ctx.reply("Thank you! Feel free to return anytime. 😊");
-      delete userStates[telegramId];
-    }
-    ctx.answerCbQuery();
-  } else if (state.step === "role") {
-    const roleMap = {
-      "frontend-developer": "frontend-developer",
-      "backend-developer": "backend-developer",
-      "fullstack-developer": "fullstack-developer",
-      "software-engineer": "software-engineer",
-    };
-    const role = roleMap[message];
-    if (role) {
-      state.role = role;
-      state.applicationDate = new Date().toLocaleDateString();
-
-      state.optionalQueue = ["location", "stipend", "companyProfileLink", "jd"];
-      state.step = "askOptional";
-      await askNextOptionalField(ctx, telegramId);
-    }
-    ctx.answerCbQuery();
-  } else if (state.step === "link") {
-    state.link = message === "yes" ? null : undefined;
-    if (message === "yes") {
-      state.step = "linkInput";
-      await ctx.reply("Please send the company link or JD.");
-    } else {
-      state.optionalQueue = ["location", "stipend", "companyProfileLink", "jd"];
-      state.step = "askOptional";
-      await askNextOptionalField(ctx, telegramId);
-    }
-    ctx.answerCbQuery();
-  } else if (state.step === "askStatus") {
-    const statusMap = {
-      "applied": "applied",
-      "resume-screening": "resume-screening",
-      "interview-process": "interview-process",
-      "waiting-result": "waiting-result",
-      "selected": "selected",
-      "rejected": "rejected",
-    };
-    const status = statusMap[message];
-    if (status) {
-      state.status = status;
-      await updateApplication(ctx, telegramId);
-    }
-    ctx.answerCbQuery();
-  } else if (message === "optional_yes") {
-    state.step = "optionalInput";
-    await ctx.reply(`Please enter the ${state.currentOptional}.`);
-    ctx.answerCbQuery();
-  } else if (message === "optional_no") {
-    await askNextOptionalField(ctx, telegramId);
-    ctx.answerCbQuery();
-  } else if (message === "more_yes" || message === "more_no") {
-    handleMoreOption(ctx, telegramId, message);
-    ctx.answerCbQuery();
-  } else if (state.step === "askDate") {
-    const datePattern = /^(\d{1,2})\/(\d{1,2})\/(\d{4})$/;
-    if (datePattern.test(message)) {
-      state.date = message;
-      await fetchApplicationsByDate(ctx, telegramId);
-      ctx.answerCbQuery();
-    } else {
-      ctx.answerCbQuery("Invalid date format. Please use MM/DD/YYYY.");
-    }
-  } else if (state.step === "showDetails" && message === "yes") {
-    state.step = "displayDetails";
-    await displayApplicationDetails(ctx, telegramId);
-    ctx.answerCbQuery();
-  } else if (state.step === "showDetails" && message === "no") {
-    await askMoreOption(ctx, telegramId);
-    ctx.answerCbQuery();
-  }
-});
 
 // TEXT INPUTS
 bot.on("text", async (ctx) => {
